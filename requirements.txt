@@ -12,7 +12,6 @@ cffi==1.12.3
 chardet==3.0.4
 Click==7.0
 cryptography==3.1
-cymem==2.0.2
 decorator==4.4.0
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.0/en_core_web_sm-2.2.0.tar.gz#egg=en_core_web_sm
 # en-core-web-sm==2.2.5
