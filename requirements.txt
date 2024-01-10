@@ -68,7 +68,6 @@ requests==2.22.0
 resampy==0.2.2
 six==1.12.0
 SoundFile==0.10.2
-spacy==2.2.2
 SQLAlchemy==1.3.8
 srsly==0.2.0
 StringGenerator==0.3.4
