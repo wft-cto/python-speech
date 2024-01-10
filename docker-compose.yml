@@ -1,0 +1,63 @@
+version: '3.7'
+
+services: 
+
+  web:
+    build: .
+    volumes:
+      -  ./src/:/app/
+      - ./static:/speech_tagging/src/speech_tagging/static
+    #   - static_volume:/usr/src/static_cdn
+    #   - media_volume:/usr/src/media_cdn
+    ports:
+        - 5000:5000
+    depends_on:
+      - db_speech_tagging
+    # networks:
+    #   - nginx_network
+   
+
+#   nginx:
+#     image: nginx:1.13
+#     ports: 
+#       - 5002:80  
+#     volumes:
+#       - ./config/nginx/conf.d:/etc/nginx/conf.d
+#       - static_volume:/usr/src/static_cdn
+#       - media_volume:/usr/src/media_cdn
+#     depends_on:
+#       - web
+#     networks:
+#       - nginx_network
+
+  db_speech_tagging:
+    image: mysql:5.7
+    command: --max_allowed_packet=268435456
+    ports:
+        - "3330:3306"
+    environment:
+        MYSQL_ROOT_USER: root
+        MYSQL_ROOT_PASSWORD: newrunAi18
+        MYSQL_DATABASE: speech_tagging
+    restart: always
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+
+  app:
+    depends_on:
+      - db_speech_tagging
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    ports:
+      - '8002:80'
+    environment:
+      PMA_HOST: db_speech_tagging
+
+volumes:
+  db_speech_tagging:
+
+
+
+      
+  

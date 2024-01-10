@@ -1,0 +1,24 @@
+from picovoice import Picovoice
+
+def wake_word_callback():
+    # wake word detected
+    pass
+
+def inference_callback(inference):
+   if inference.is_understood:
+      intent = inference.intent
+      slots = inference.slots
+      # take action based on intent and slot values
+   else:
+      # unsupported command
+      pass
+
+try:
+    picovoice = Picovoice(
+        access_key="${ACCESS_KEY}",
+        keyword_path="${KEYWORD_FILE_PATH}",
+        wake_word_callback=wake_word_callback,
+        context_path="${CONTEXT_FILE_PATH}",
+        inference_callback=inference_callback)
+except PicovoiceError as e:
+    pass
