@@ -100,7 +100,7 @@ class RecognizeSpeaker(Resource):
                     # print(speaker_profiles)
 
                     eagle = pveagle.create_recognizer(
-                        access_key="H+7ePYSW5O7o7Y9DPly5F1pTkwCg+NVFzCmWDTieX+B5qkpnsQEJtQ==",
+                        access_key="/vF6q06PnydpPi9ITOeF9+PJHKnmOYUGjXCS58glpYgwGJ4CEHRICQ==",
                         speaker_profiles=speaker_profiles)
 
                     voice_chunk = {

@@ -236,7 +236,7 @@ def recognize_speaker(filename,transcript,transcription_description,audio_id):
     for chunk in speaker_chunk:
         id_ = chunk['speaker']
         audio_helper.trim_and_save_audio_from_chunk(audio_object,id_, ext, chunk, filename,
-                                                    PATH_SPEAKER_RECOGNITION)
+                                                    PATH_SPEAKERS)
 
     try:
         final_speakers = recognition_helper.final_speakers()
@@ -395,7 +395,7 @@ class Transcribe(Resource):
             transcript_data = json_helper.read_json(json_filepath)
             app.logger.info(datetime.now())
             app.logger.info("transcript data- recognized_speakers")
-            app.logger.info(transcript_data["recognized_speakers"])
+            # app.logger.info(transcript_data["recognized_speakers"])
             app.logger.info(transcript_data)
             app.logger.info("\n")
 
@@ -448,12 +448,14 @@ class Transcribe(Resource):
                     # "transcript_before_formatting":transcript_before_formatting,
                     "results": formatted_transcript
                 }
+                transcript.update(transcription_description)
                 ws.save_json(transcript, filename, request.method)
                 # print("save the json file")
                 app.logger.info(datetime.now())
                 app.logger.info("save the json file \n")
+                print(transcription_description)
+                transcript = recognize_speaker(filename,transcript,transcription_description,audio_id)
                 transcript = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
-                # transcript = recognize_speaker(filename,transcript,transcription_description,audio_id)
                 # print("recognized speaker.............")
                 app.logger.info(datetime.now())
                 app.logger.info(" recognieze speaker........ \n")

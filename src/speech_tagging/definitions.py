@@ -29,6 +29,7 @@ PATH_JSON_MEETING = os.path.join(PATH_JSON, MEETING_FOLDER)
 PATH_JSON_MEETING_EDIT = os.path.join(PATH_JSON, MEETING_FOLDER_EDIT)
 PATH_ATTENDEE_VOICE_SAMPLE = os.path.join(PATH_AUDIO, "attendee_voice_samples")
 PATH_SPEAKER_RECOGNITION = os.path.join(PATH_AUDIO, "speaker")
+PATH_SPEAKERS = os.path.join(PATH_AUDIO, "speakers")
 PATH_EMBEDDING = os.path.join(PATH_PKG,"static/embedding")
 
 if not os.path.exists(PATH_JSON):

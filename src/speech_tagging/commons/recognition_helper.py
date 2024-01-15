@@ -98,7 +98,7 @@ def recognize():
     # Load data
     all_speaker, all_embedding = load_data()
     result = {}
-    sub_dirs = glob.glob(os.path.join(PATH_SPEAKER_RECOGNITION, "*"))
+    sub_dirs = glob.glob(os.path.join(PATH_SPEAKERS, "*"))
     for sub_dir in sub_dirs:
         speaker = os.path.basename(sub_dir)
         files = glob.glob(os.path.join(sub_dir, "*"))
@@ -136,7 +136,7 @@ def final_speakers():
     app.logger.info(final_speakers)
     app.logger.info("\n")
 
-    # shutil.rmtree(PATH_SPEAKER_RECOGNITION)
+    shutil.rmtree(PATH_SPEAKERS)
     return final_speakers
 
 
@@ -164,6 +164,8 @@ def read_file(file_name, sample_rate):
 def find_speakers(transcript, audio_object, audio_id):
     # print(transcript)
 
+    founded_speakers = {}
+
     try: 
         # audio_obj = AudioModel.query.get(audio_id)
         audio_filename = audio_helper.get_basename(audio_object.path)
@@ -173,74 +175,97 @@ def find_speakers(transcript, audio_object, audio_id):
 
         audio_obj,extension = audio_helper.create_audio_segment_object(audio_filename)
         
-        recognization_results = []
+        recognization_results = {}
+
+
 
         for segment in transcribe_json:
-            if isinstance(segment['speaker'], int):
-                start = segment['from']
-                end = segment['to']
-                if (end - start > 1):
-                    # Speaker Profiles 
-                    all_speakers = get_all_filename_from_folder(PATH_SPEAKER_RECOGNITION)
+            # segment['speaker_recognized'] = False
+            # if isinstance(segment['speaker'], int):
+            start = segment['from']
+            end = segment['to']
+            if (end - start > 1):
+                # Speaker Profiles 
+                all_speakers = get_all_filename_from_folder(PATH_SPEAKER_RECOGNITION)
 
-                    speaker_profiles = []
+                speaker_profiles = []
 
-                    for speaker in all_speakers:
-                        # speaker_labels.append(os.path.splitext(os.path.basename(file_paths))[0])
-                        speaker_filepath = os.path.join(PATH_SPEAKER_RECOGNITION, speaker)
-                        with open(speaker_filepath, 'rb') as f:
-                            speaker_profiles.append(pveagle.EagleProfile.from_bytes(f.read()))
+                for speaker in all_speakers:
+                    # speaker_labels.append(os.path.splitext(os.path.basename(file_paths))[0])
+                    speaker_filepath = os.path.join(PATH_SPEAKER_RECOGNITION, speaker)
+                    with open(speaker_filepath, 'rb') as f:
+                        speaker_profiles.append(pveagle.EagleProfile.from_bytes(f.read()))
 
-                    # Print the list of file paths
-                    # print("File Paths:", speaker_profiles).
+                # Print the list of file paths
+                # print("File Paths:", speaker_profiles).
 
-                    # print(speaker_profiles)
+                # print(speaker_profiles)
 
-                    eagle = pveagle.create_recognizer(
-                        access_key="H+7ePYSW5O7o7Y9DPly5F1pTkwCg+NVFzCmWDTieX+B5qkpnsQEJtQ==",
-                        speaker_profiles=speaker_profiles)
+                eagle = pveagle.create_recognizer(
+                    access_key="/vF6q06PnydpPi9ITOeF9+PJHKnmOYUGjXCS58glpYgwGJ4CEHRICQ==",
+                    speaker_profiles=speaker_profiles)
 
-                    voice_chunk = {
-                        "from": segment['from'],
-                        "to": segment['to']
-                    }
+                voice_chunk = {
+                    "from": segment['from'],
+                    "to": segment['to']
+                }
 
-                    trimmed_audio = audio_helper.trim_and_save_audio_from_chunk(audio_obj,audio_id,'wav',voice_chunk,audio_filename.split('.')[0], PATH_AUDIO_CLIPS)
+                trimmed_audio = audio_helper.trim_and_save_audio_from_chunk(audio_obj,audio_id,'wav',voice_chunk,audio_filename.split('.')[0], PATH_AUDIO_CLIPS)
 
-                    try:
-                        audio = read_file(trimmed_audio, eagle.sample_rate)
-                        # print("Eagle Sample Rate on Matching :", eagle.sample_rate)
-                        # print(audio)
-                        num_frames = len(audio) // eagle.frame_length
-                        frame_to_second = eagle.frame_length / eagle.sample_rate
-                        total_scores = 0
-                        # print(num_frames)
-                        speaker_index = 0
-                        for i in range(num_frames):
-                            frame = audio[i * eagle.frame_length:(i + 1) * eagle.frame_length]
-                            scores = eagle.process(frame)
-                            time = i * frame_to_second
-                            # print("Score>>>>>>>>", scores)
-                            for num in scores:
-                                if num > 0:
-                                    total_scores = total_scores + 1
-                                    speaker_index = scores.index(num)
-                            # if 1.0 in scores:
-                            #     total_scores = total_scores + 1     
+                try:
+                    audio = read_file(trimmed_audio, eagle.sample_rate)
+                    # print("Eagle Sample Rate on Matching :", eagle.sample_rate)
+                    # print(audio)
+                    num_frames = len(audio) // eagle.frame_length
+                    frame_to_second = eagle.frame_length / eagle.sample_rate
+                    total_scores = 0
+                    # print()
+                    speaker_index = 0
+                    for i in range(num_frames):
+                        frame = audio[i * eagle.frame_length:(i + 1) * eagle.frame_length]
+                        scores = eagle.process(frame)
+                        # time = i * frame_to_second
+                        # print("Score>>>>>>>>", scores)
+                        largest_element = max(scores, key=lambda x: x)
 
-                        # print(total_scores)               
+                        if largest_element > 0:
+                            total_scores = total_scores + 1
+                            speaker_index = scores.index(largest_element)
+                        # if 1.0 in scores:
+                        #     total_scores = total_scores + 1     
+                    print(speaker_index)
+                    print(all_speakers)
+                    print("total_scores >>>>",num_frames, "  resulted Scores >>>>>>>", total_scores)               
 
-                        if ((total_scores * 100) / num_frames > 50):
-                            segment['speaker'] = str(all_speakers[speaker_index])
-                            # print("speaker matched >>>>>>>", all_speakers[speaker_index])
+                    if ((total_scores * 100) / num_frames > 50):
+                        speaker_id = (all_speakers[speaker_index]).split('.')[0].split('-')[1]
+                        print(all_speakers[speaker_index])
+                        # segment['speaker_recognized'] = True
+                        speaker_id1 = int(speaker_id)
+                        attendee = AttendeeModel.find_by_id(int(speaker_id1))
+                        # segment["speaker_detail"] = attendee.json()
+                        curId = segment['speaker'] 
+                        strCurId = str(curId)
+                        print(strCurId)
+                        recognization_results[strCurId] = attendee.json()
+                        for key,value in transcript["recognized_speakers"].items():
+                            if key == strCurId:
+                                transcript["recognized_speakers"][key] = attendee.json()
+                                
+                    
+                    # transcript.update()
+                    # print(recognization_results)
 
-                    except pveagle.EagleActivationLimitError:
-                        print('AccessKey has reached its processing limit.')
-                    except pveagle.EagleError as e:
-                        print("Failed to process audio: ", e)
-                        raise
-                    finally:
-                        eagle.delete()
+                except pveagle.EagleActivationLimitError:
+                    print('AccessKey has reached its processing limit.')
+                except pveagle.EagleError as e:
+                    print("Failed to process audio: ", e)
+                    raise
+                finally:
+                    eagle.delete()
+
+        # print(recognization_results)
+        # transcript['recognized_speakers'] = recognization_results
     
     except Exception as e:
         print("Error :", e)

@@ -9,6 +9,8 @@ Pipfile
 Pipfile.lock
 /venv/
 /venv/*
+/myenv/
+/myenv/*
 migrations
 test.log
 

@@ -233,6 +233,7 @@ class AttendeeVoice(Resource):
         }
 
         if not AttendeeModel.find_by_id(attendee_id):
+            print("HERE")
             return {"message":ATTENDEE_DOES_NOT_EXIST.format(attendee_id)}
 
         all_audio_files = get_all_filename_from_folder(MEETING_FOLDER)
@@ -241,6 +242,7 @@ class AttendeeVoice(Resource):
         audio_filename = audio_helper.get_basename(audio_obj.path)
 
         if audio_filename not in all_audio_files:
+            print("HERE1")
             return {"message": AUDIO_ALREADY_EXISTS.format(audio_name)}, 400
 
         try:
