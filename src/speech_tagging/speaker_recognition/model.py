@@ -2,7 +2,10 @@ import numpy as np
 import keras.backend as K
 from keras.layers import Input, GlobalAveragePooling2D, Reshape
 from keras.layers.convolutional import Conv2D, ZeroPadding2D, MaxPooling2D, AveragePooling2D
-from keras.layers.normalization import BatchNormalization
+# from keras.layers.normalization import BatchNormalization
+from tensorflow.keras.layers import (
+    BatchNormalization
+)
 from keras.layers.core import Lambda, Activation
 from keras.models import Model
 

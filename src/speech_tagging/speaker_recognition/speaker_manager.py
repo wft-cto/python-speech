@@ -7,7 +7,10 @@ import time
 from scipy.spatial.distance import cdist
 import tensorflow as tf
 
-graph = tf.get_default_graph()
+# graph = tf.get_default_graph()
+
+graph = tf.compat.v1.get_default_graph()
+
 
 
 class SpeakerIdentificationManager:

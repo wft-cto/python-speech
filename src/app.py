@@ -247,9 +247,9 @@ def home():
     return render_template('index.html')
 
 
-@app.route('/sas')
-def sas():    
-    return print('SAS')
+# @app.route('/sas')
+# def sas():    
+#     return print('SAS')
 
 @login_manager.user_loader
 def load_user(user_id):
