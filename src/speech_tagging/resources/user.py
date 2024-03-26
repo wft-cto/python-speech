@@ -16,6 +16,11 @@ from flask_login import LoginManager,login_user
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token,create_refresh_token)
 
+import strgen
+import random
+
+import jwt
+
 user_schema = UserSchema()
 organization_schema = OrganizationSchema()
 audios_model_schema = AudioModelSchema(many=True)
@@ -123,6 +128,7 @@ class UserDetail(Resource):
 
     def delete(self,user_id):
         user = User.find_by_id(user_id)
+        print("user", user)
         if not user :
             return {"data": {},
                     "message": "User with id doesn't exist",
@@ -135,8 +141,9 @@ class UserDetail(Resource):
             return {"message": "User deleted successfully",
                     "data": None,
                     "success": True}, 201
-        except:
+        except Exception as e:
             return {"message": "User could not be deleted",
+                    "error": e,
                     "data": None,
                     "success": False}, 500
 
@@ -182,6 +189,104 @@ class UserDetailFromEmail(Resource):
                    "success": True
                }, 200
 
+
+class UserAppleLogin(Resource):
+    def post(cls):
+
+        loginDetails = request.get_json()
+
+
+        print(loginDetails)
+        try: 
+            userIdentified = loginDetails["userIdentifier"]
+
+            data = jwt.decode(loginDetails["identityToken"], '', verify=False)
+
+            print("Decoded data>>>>>>", data)
+
+            print("userIdentified>>>>>>>>>>>", userIdentified)
+            # app.logger.info("userIdentified>>>>>>>>>>>", userIdentified)
+
+            if userIdentified:
+
+                email = loginDetails["email"]
+
+                if not email: 
+                    email = data["email"]
+
+                if email:
+
+                    user = User.query.filter_by(email=email).first()
+
+                    if not user:
+                        user_id = random.randint(0, 500)
+                        print(user_id)
+
+                        password = strgen.StringGenerator("[\d\w]{15}").render()
+
+                        first_name = loginDetails["first_name"]
+
+                        last_name = loginDetails["last_name"]
+
+                        if not last_name:
+                            last_name = first_name
+
+                        # if not first_name:
+                        #     first_name = email[0:5]
+
+                        # if not last_name:
+                        #     last_name = email[0:5]
+
+                        old_user = User.query.filter_by(id=user_id).first()
+
+                        if not old_user:
+                            user = User(email=email,id=user_id, username=email, password=password, first_name=first_name, last_name=last_name, organization_id=1, user_type=loginDetails["user_type"], userIdentifier=userIdentified)
+                            user.save_to_db()
+
+                else:
+
+                    user = User.query.filter_by(userIdentifier=userIdentified).first()
+
+                
+                if user:
+                    login_user(user)
+                    access_token = create_access_token(identity=user.id)
+                    refresh_token = create_refresh_token(identity=user.id)
+
+                else:
+                    print("User not find")
+                    return {
+                        "message" : "Please logout your apple id from the device settings. And then try again!!"
+                    }, 400
+
+
+
+                return {"data":
+                    {
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                        "id": user_schema.dump(user),
+                        "organization_id": 1
+                    },
+                        "message": "User logged in successfully",
+                        "success": True
+                    }, 201
+
+        except Exception as e:
+            print("Error >>>>>>", e)
+
+            return {
+                "Error": e
+            }, 400
+
+class WixTestUrl(Resource):
+    @classmethod
+    def post(cls):
+
+        urlDetails = request.get_json()
+
+        print("urlDetails>>>>>", urlDetails)
+
 class UserLogin(Resource):
     parser = reqparse.RequestParser()
 
@@ -225,7 +330,7 @@ class UserLogin(Resource):
 
             # if the above check passes, then we know the user has the right credentials
             else:
-                user.authenticated = True;
+                user.authenticated = True
                 user.save_to_db()
                 login_user(user)
                 access_token = create_access_token(identity=user.id)

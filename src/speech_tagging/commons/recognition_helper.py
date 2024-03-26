@@ -19,6 +19,7 @@ import pveagle
 import wave
 import struct
 from speech_tagging.models.audio import AudioModel
+from collections import Counter
 
 COST_METRIC = "cosine"  # euclidean or cosine
 speaker = []
@@ -162,7 +163,6 @@ def read_file(file_name, sample_rate):
 
 
 def find_speakers(transcript, audio_object, audio_id):
-    # print(transcript)
 
     founded_speakers = {}
 
@@ -170,14 +170,13 @@ def find_speakers(transcript, audio_object, audio_id):
         # audio_obj = AudioModel.query.get(audio_id)
         audio_filename = audio_helper.get_basename(audio_object.path)
 
-        transcribe_json = transcript["results"]
+        # transcribe_json = transcript["results"]
+        transcribe_json = transcript
         # print("transcribe_json", transcribe_json)
 
         audio_obj,extension = audio_helper.create_audio_segment_object(audio_filename)
         
         recognization_results = {}
-
-
 
         for segment in transcribe_json:
             # segment['speaker_recognized'] = False
@@ -202,7 +201,7 @@ def find_speakers(transcript, audio_object, audio_id):
                 # print(speaker_profiles)
 
                 eagle = pveagle.create_recognizer(
-                    access_key="/vF6q06PnydpPi9ITOeF9+PJHKnmOYUGjXCS58glpYgwGJ4CEHRICQ==",
+                    access_key=os.environ.get("PICOVOICE_KEY"),
                     speaker_profiles=speaker_profiles)
 
                 voice_chunk = {
@@ -221,6 +220,7 @@ def find_speakers(transcript, audio_object, audio_id):
                     total_scores = 0
                     # print()
                     speaker_index = 0
+                    speakers_index = []
                     for i in range(num_frames):
                         frame = audio[i * eagle.frame_length:(i + 1) * eagle.frame_length]
                         scores = eagle.process(frame)
@@ -230,28 +230,38 @@ def find_speakers(transcript, audio_object, audio_id):
 
                         if largest_element > 0:
                             total_scores = total_scores + 1
-                            speaker_index = scores.index(largest_element)
+                            speakers_index.append(scores.index(largest_element))
+                            # speaker_index = scores.index(largest_element)
                         # if 1.0 in scores:
                         #     total_scores = total_scores + 1     
+                    
+                    counter = Counter(speakers_index)
+
+                    speaker_index = max(counter, key=counter.get)
+
                     print(speaker_index)
                     print(all_speakers)
                     print("total_scores >>>>",num_frames, "  resulted Scores >>>>>>>", total_scores)               
 
-                    if ((total_scores * 100) / num_frames > 50):
+                    if ((total_scores * 100) / num_frames > 25):
                         speaker_id = (all_speakers[speaker_index]).split('.')[0].split('-')[1]
                         print(all_speakers[speaker_index])
                         # segment['speaker_recognized'] = True
                         speaker_id1 = int(speaker_id)
                         attendee = AttendeeModel.find_by_id(int(speaker_id1))
+                        print("attendee", attendee)
+                        if attendee is not None:
+                            recognization_results[segment["speaker"]] = attendee.json()
+                        else:
+                            recognization_results[segment["speaker"]] = "Unknown"    
                         # segment["speaker_detail"] = attendee.json()
-                        curId = segment['speaker'] 
-                        strCurId = str(curId)
-                        print(strCurId)
-                        recognization_results[strCurId] = attendee.json()
-                        for key,value in transcript["recognized_speakers"].items():
-                            if key == strCurId:
-                                transcript["recognized_speakers"][key] = attendee.json()
-                                
+                        # transcript["recognized_speakers"][str(strCurId)] = attendee.json()
+                        # for key,value in transcript["recognized_speakers"].items():
+                        #     if key == strCurId:
+                        #         transcript["recognized_speakers"][key] = attendee.json()
+                    
+                    else:
+                        recognization_results[segment["speaker"]] = "Unknown"
                     
                     # transcript.update()
                     # print(recognization_results)
@@ -265,6 +275,8 @@ def find_speakers(transcript, audio_object, audio_id):
                     eagle.delete()
 
         # print(recognization_results)
+
+        # return recognization_results
         # transcript['recognized_speakers'] = recognization_results
     
     except Exception as e:
@@ -281,7 +293,7 @@ def find_speakers(transcript, audio_object, audio_id):
                 os.remove(audio_clip_path)
             os.rmdir(clips_folder_path)
 
-        return transcript
+        return recognization_results
 
 
 

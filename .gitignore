@@ -7,7 +7,7 @@ src/speech_tagging/.env
 src/speech_tagging/static/
 Pipfile
 Pipfile.lock
-/venv/
+# /venv/
 /venv/*
 /myenv/
 /myenv/*

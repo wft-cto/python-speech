@@ -241,10 +241,6 @@ class AttendeeVoice(Resource):
         audio_obj = AudioModel.query.get(audio_id)
         audio_filename = audio_helper.get_basename(audio_obj.path)
 
-        if audio_filename not in all_audio_files:
-            print("HERE1")
-            return {"message": AUDIO_ALREADY_EXISTS.format(audio_name)}, 400
-
         try:
             # print("HERE")
             audio_object,extension = create_audio_segment_object(audio_filename)
@@ -253,8 +249,11 @@ class AttendeeVoice(Resource):
             # print(filename)
             all_speaker_files = get_all_filename_from_folder(SPEAKER_FOLDER)
             # print(all_speaker_files)
-            if filename in all_speaker_files:
-                return {"message":VOICE_SAMPLE_ALREADY_EXISTS}, 400
+
+            if audio_filename not in all_audio_files:
+                print("HERE1")
+                return {"message": AUDIO_ALREADY_EXISTS.format(audio_name)}, 400
+
 
             for voice_time in voice_list:
                 voice_chunk = {
@@ -322,9 +321,40 @@ class AttendeeVoice(Resource):
                     else:
                         speaker_profile = eagle_profiler.export()
                         # attendee_obj.voice_id = speaker_profile
-                        with open(PATH_SPEAKER_RECOGNITION+str('/'+ attendee_obj.first_name + '-' +  str(attendee_id))+'.txt' , 'wb') as f:
-                            f.write(speaker_profile.to_bytes())
-                        print('Speaker profile is saved to', speaker_profile)
+
+                        if filename in all_speaker_files:
+                            with open(PATH_SPEAKER_RECOGNITION+ '/' +filename , 'wb') as f:
+                                f.write(speaker_profile.to_bytes())
+                            print('Speaker profile is saved to', speaker_profile)
+
+                        else: 
+                            with open(PATH_SPEAKER_RECOGNITION+str('/'+ attendee_obj.first_name + '-' +  str(attendee_id))+'.txt' , 'wb') as f:
+                                f.write(speaker_profile.to_bytes())
+                            print('Speaker profile is saved to', speaker_profile)
+
+                        # audioObj = AudioModel.find_by_id(audio_id)
+
+                        # attendeeObj = AttendeeModel.find_by_id(attendee_id)
+
+                        # curAttendee = attendeeObj.audios
+                        
+                        # if curAttendee:
+                        #     continue
+                        # else:
+                        #     newAttendee = { }
+                        #     newAttendee[attendee_id] = attendeeObj.json()
+                            
+
+                        # print(audioObj)
+
+                        # print(newAttendee)
+
+                        # audio_obj.attendees = attendeeObj.json()
+
+                        # attendeeObj.audios = curAttendee.append(audio_id)
+
+                        # db.session.commit()
+
                 except Exception  as e:
                     print('Error: ', e)
                 except pveagle.EagleActivationLimitError:
@@ -387,7 +417,7 @@ class AttendeeVoice(Resource):
 #                 "data": all_detail,
 #                 "message":"Attendee detail retrive successfully",
 #                 "success":True
-#             }, 200
+#             }, 200 
 
 
 class AttendeeDelete(Resource):
@@ -405,94 +435,116 @@ class AttendeeDelete(Resource):
                        "success": False,
                        "message": ATTENDEE_DOES_NOT_EXIST.format(attendee_id)
                    }, 400
-            
-        
-        audios = AudioModel.query.filter(AudioModel.attendee.any(id=attendee_id)).all()
-        for audio in audios:
-            filename = audio_helper.get_basename(audio.path)
 
-            basename = filename.split(".")[0]
-            json_filename = ".".join((basename, "json"))
+        try: 
+
+            attendees = AttendeeModel.audios.any(id=attendee_id)
+            audios = AudioModel.query.filter(attendees).all()
+
+            print(attendees)
+
+            print(audios)
+
+            attendee_obj = AttendeeModel.find_by_id(attendee_id)
+            attendee_obj.delete_from_db()
+
+        except Exception as e:
+            return { "message": "Something goes error in server",
+                    "result": str(e),
+                    "success": False
+                }, 400
+
+        return { "message": ATTENDEE_DELETEDED_SUCCESSFULLY,
+                    "success": True
+                   }, 200
+
+        
+        # audios = AudioModel.query.filter(AudioModel.attendee.any(id=attendee_id)).all()
+        # for audio in audios:
+        #     filename = audio_helper.get_basename(audio.path)
+
+        #     basename = filename.split(".")[0]
+        #     json_filename = ".".join((basename, "json"))
            
-            # update recognized_speaker(replace respective attendee detail by "Unknown") in audio json file 
+        #     # update recognized_speaker(replace respective attendee detail by "Unknown") in audio json file 
             
-            all_json_files_edited = get_all_jsonfile_from_folder(MEETING_FOLDER_EDIT)
-            if json_filename in all_json_files_edited:
-                json_filepath = os.path.join(PATH_JSON_MEETING_EDIT,json_filename)
-                transcript_data = json_helper.read_json(json_filepath)
-                transcript_data = replace_attendee_detail_by_unknown(transcript_data,attendee_id)
-                # for key,value in transcript_data["recognized_speakers"].items():
-                #     if value == "Unknown":
-                #         pass
-                #     else:
-                #         if value["id"] == attendee_id:
-                #             transcript_data["recognized_speakers"][key] = "Unknown"
+        #     all_json_files_edited = get_all_jsonfile_from_folder(MEETING_FOLDER_EDIT)
+        #     if json_filename in all_json_files_edited:
+        #         json_filepath = os.path.join(PATH_JSON_MEETING_EDIT,json_filename)
+        #         transcript_data = json_helper.read_json(json_filepath)
+        #         transcript_data = replace_attendee_detail_by_unknown(transcript_data,attendee_id)
+        #         # for key,value in transcript_data["recognized_speakers"].items():
+        #         #     if value == "Unknown":
+        #         #         pass
+        #         #     else:
+        #         #         if value["id"] == attendee_id:
+        #         #             transcript_data["recognized_speakers"][key] = "Unknown"
                             
-                json_helper.write_json(json_filepath,transcript_data)
-                # with open(json_filepath,'w') as write_file:
-                #     json.dump(transcript_data,write_file)
+        #         json_helper.write_json(json_filepath,transcript_data)
+        #         # with open(json_filepath,'w') as write_file:
+        #         #     json.dump(transcript_data,write_file)
             
             
-            json_filepath = os.path.join(PATH_JSON_MEETING, json_filename)
-            transcript_data = json_helper.read_json(json_filepath)
-            transcript_data = replace_attendee_detail_by_unknown(transcript_data,attendee_id)
+        #     json_filepath = os.path.join(PATH_JSON_MEETING, json_filename)
+        #     transcript_data = json_helper.read_json(json_filepath)
+        #     transcript_data = replace_attendee_detail_by_unknown(transcript_data,attendee_id)
                         
-            json_helper.write_json(json_filepath,transcript_data)      
+        #     json_helper.write_json(json_filepath,transcript_data)      
             
         # print(audios)
 
-        embedding_file = os.path.join(PATH_EMBEDDING,"embedding.pickle")
-        if os.path.exists(embedding_file):
-            data = pickle.loads(open(embedding_file,"rb").read())
-            # print("print pickle data==========",data)
-            speakers = data["speaker"]
-            speaker_embeddings = data['embedding']
+        # embedding_file = os.path.join(PATH_EMBEDDING,"embedding.pickle")
+        # if os.path.exists(embedding_file):
+        #     data = pickle.loads(open(embedding_file,"rb").read())
+        #     # print("print pickle data==========",data)
+        #     speakers = data["speaker"]
+        #     speaker_embeddings = data['embedding']
             
-            try:
-                #create new list after removing elements of two list with same index
-                speaker = [speaker for speaker_embedding, speaker in zip(speaker_embeddings, speakers) if speaker != attendee_id ]
-                speaker_embedding = [speaker_embedding for speaker_embedding, speaker in zip(speaker_embeddings, speakers) if speaker != attendee_id  ]
+        #     try:
+        #         #create new list after removing elements of two list with same index
+        #         speaker = [speaker for speaker_embedding, speaker in zip(speaker_embeddings, speakers) if speaker != attendee_id ]
+        #         speaker_embedding = [speaker_embedding for speaker_embedding, speaker in zip(speaker_embeddings, speakers) if speaker != attendee_id  ]
                 
-                wfile = open(embedding_file,"wb")
-                data = {"speaker":speaker,"embedding":speaker_embedding}
-                wfile.write(pickle.dumps(data))
-                wfile.close()
+        #         wfile = open(embedding_file,"wb")
+        #         data = {"speaker":speaker,"embedding":speaker_embedding}
+        #         wfile.write(pickle.dumps(data))
+        #         wfile.close()
             
-                # embedding_objs = EmbeddingModel.find_by_attendee_id(attendee_id)
-                embedding_objs = EmbeddingModel.query.filter_by(attendee_id=attendee_id).delete()
-                # embedding_objs.delete_from_db()
-                db.session.commit()
+        #         # embedding_objs = EmbeddingModel.find_by_attendee_id(attendee_id)
+        #         embedding_objs = EmbeddingModel.query.filter_by(attendee_id=attendee_id).delete()
+        #         # embedding_objs.delete_from_db()
+        #         db.session.commit()
                 
-                attendee_obj = AttendeeModel.find_by_id(attendee_id)
-                attendee_obj.delete_from_db()
+        #         attendee_obj = AttendeeModel.find_by_id(attendee_id)
+        #         attendee_obj.delete_from_db()
                 
-                # remove attendee voice samples folder of respective attendee 
-                file_folder = os.path.join(PATH_ATTENDEE_VOICE_SAMPLE,str(attendee_id))
-                # print(file_folder)
+        #         # remove attendee voice samples folder of respective attendee 
+        #         file_folder = os.path.join(PATH_ATTENDEE_VOICE_SAMPLE,str(attendee_id))
+        #         # print(file_folder)
 
-                if os.path.exists(file_folder):
-                    shutil.rmtree(file_folder)
+        #         if os.path.exists(file_folder):
+        #             shutil.rmtree(file_folder)
 
-            except Exception as e:
-                return {"data":
-                            {
-                            },
-                        "message": "Something goes error in server",
-                        # "message": str(e),
-                        "success": False
-                    }, 500           
+        #     except Exception as e:
+        #         return {"data":
+        #                     {
+        #                     },
+        #                 "message": "Something goes error in server",
+        #                 # "message": str(e),
+        #                 "success": False
+        #             }, 500           
             
-            return {"data":
-                {
-                },
-                    "message": ATTENDEE_DELETEDED_SUCCESSFULLY,
-                    "success": True
-                   }, 200
-        else:
-            return {"data":
-                        {
-                        },
-                       "message": "Embedding file doesn't exist",
-                       "success": False
-                   }, 400
+        #     return {"data":
+        #         {
+        #         },
+        #             "message": ATTENDEE_DELETEDED_SUCCESSFULLY,
+        #             "success": True
+        #            }, 200
+        # else:
+        #     return {"data":
+        #                 {
+        #                 },
+        #                "message": "Embedding file doesn't exist",
+        #                "success": False
+        #            }, 400
    

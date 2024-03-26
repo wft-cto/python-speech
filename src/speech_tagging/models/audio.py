@@ -16,6 +16,8 @@ class AudioModel(db.Model):
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'),nullable=False)
     user = db.relationship('User',lazy=True)
 
+    attendees = db.Column(db.String, nullable=False)
+
     created_date = db.Column(db.DateTime,default=datetime.utcnow)
     date = db.Column(db.DateTime)
 

@@ -124,11 +124,18 @@ class MeetingAudio(Resource):
         except FileNotFoundError:
             return {"message": AUDIO_NOT_FOUND.format(filename)}, 404
 
-    def delete(self, filename: str):
+    def delete(self, audio_id: int):
         """
         This endpoint is used to delete the requested audio under the user's folder.
         It uses the JWT to retrieve user information.
         """
+
+        print("HRE")
+        audio_obj = AudioModel.find_by_id(audio_id)
+        print(audio_obj)
+        filename = audio_helper.get_basename(audio_obj.path)
+        print(filename)
+        audio_obj.delete_from_db()
         # check if filename is URL secure
         if not audio_helper.is_filename_safe(filename):
             return {"message": AUDIO_ILLEGAL_FILENAME.format(filename)}, 400
@@ -150,9 +157,10 @@ class Audio(Resource):
         
         # audios = AudioModel.query.filter_by(organization_id=organization_id).order_by(asc(AudioModel.filename))
         audios = AudioModel.query.filter_by(organization_id=organization_id).order_by(desc(AudioModel.created_date))
+        print("Audios>>>>",audios)
         audios = audios_model_schema.dump(audios)
-        app.logger.info(type(audios))
-        app.logger.info(audios)
+        # app.logger.info(type(audios))
+        # app.logger.info(audios)
         # audio_list = audios[0]
         # app.logger.info(audio_list)
         for audio in audios:
@@ -171,7 +179,7 @@ class Audio(Resource):
                 for result in results:
                     # app.logger.info(len(result['action_phrase']))
                     action_count += len(result['action_phrase'])
-            app.logger.info(action_count)
+            # app.logger.info(action_count)
             audio.update({'action_count':action_count})
 
         return {"audios":audios}       

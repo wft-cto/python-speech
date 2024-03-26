@@ -20,9 +20,13 @@ class User(UserMixin,db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200),nullable=False)
     authenticated = db.Column(db.Boolean, default=False)
-    is_email_confirmed = db.Column(db.Boolean, default=False)
+    is_email_confirmed = db.Column(db.Boolean, nullable=True)
     # token = db.Column(db.String(50),nullable=True)
-    
+
+    #Changes for apple login
+    user_type = db.Column(db.String(50),nullable=True)
+    userIdentifier = db.Column(db.String(120), nullable=True)
+
     organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'), nullable=False)
     organization = db.relationship('OrganizationModel',lazy=True)    
     # organization = db.relationship('OrganizationModel', backref=db.backref('children'))    

@@ -107,10 +107,10 @@ def get_basename(file: Union[str, FileStorage]) -> str:
     """
     filename = _retrieve_filename(file)
 
-    app.logger.info(datetime.now())
-    app.logger.info("get_filename: ")
+    # app.logger.info(datetime.now())
+    # app.logger.info("get_filename: ")
     app.logger.info(filename)
-    app.logger.info("\n")
+    # app.logger.info("\n")
 
     return os.path.split(filename)[1]
 

@@ -1,5 +1,6 @@
 import json
 import logging
+import json
 
 from datetime import datetime
 from flask import current_app as app
@@ -15,6 +16,8 @@ from speech_tagging.commons.entity_recognition import recognize_ents
 from speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
 from speech_tagging.commons.messages import *
 from speech_tagging.commons import audio_helper, text_helper, recognition_helper
+
+from speech_tagging.resources.leopard import getTranscribe
 
 from speech_tagging.definitions import *
 
@@ -371,6 +374,14 @@ class Transcribe(Resource):
         app.logger.info(json_filename)
         app.logger.info("\n")
 
+        transcript_results = {
+            "results": [],
+            "meeting_details": {
+
+            },
+            "recognized_speakers": {}
+        }
+
         # logic for transcript json file updated 
         # all_json_files_edited = get_all_jsonfile_from_folder(MEETING_FOLDER_EDIT)
         # if json_filename in all_json_files_edited:
@@ -390,20 +401,22 @@ class Transcribe(Resource):
             json_filepath = os.path.join(PATH_JSON_MEETING,json_filename)
             # with open(json_filepath,"r") as file:
             #     transcript = json.load(file)
-            
+            print("File founded")
             # update recognized_speaker in audio json file 
+            print(json_filepath)
             transcript_data = json_helper.read_json(json_filepath)
+            print(transcript_data)
             app.logger.info(datetime.now())
             app.logger.info("transcript data- recognized_speakers")
             # app.logger.info(transcript_data["recognized_speakers"])
             app.logger.info(transcript_data)
             app.logger.info("\n")
 
-
-            founded_speakers = recognition_helper.find_speakers(transcript_data, audio_obj, audio_id)
+            founded_speakers = recognition_helper.find_speakers(transcript_data["results"], audio_obj, audio_id)
 
             # print("founded_speakers >>>>>>>>>>", founded_speakers)
-
+            
+            transcript_data["recognized_speakers"] = founded_speakers
             # print(transcript_data["recognized_speakers"])
             # for key,value in transcript_data["recognized_speakers"].items():
             #     if value == "Unknown":
@@ -417,19 +430,28 @@ class Transcribe(Resource):
             #             pass
                         
             # print("my data==========>",transcript_data["recognized_speakers"])      
+
             with open(json_filepath,'w') as write_file:
-                json.dump(founded_speakers,write_file)
+                json.dump(transcript_data,write_file)
             
             return {"message":TRANSCRIPTION_SUCCESSFUL,
                     "success":True,
                     "is_edited":False,
-                    "data":founded_speakers}, 200
+                    "data":transcript_data}, 200
 
         try:
             filename = audio_helper.get_basename(audio_obj.path)
-            transcript,status = ws.transcribe_meeting(request.method, filename,customization_id)
-            # print("status: ********************")
-            # print(status)
+
+            transcript, status = getTranscribe(audio_id)
+            # transcript.update(transcription_description)
+            founded_speakers = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
+            print("founded_speakers>>>>>", founded_speakers)
+            # transcript,status = ws.transcribe_meeting(request.method, filename,customization_id)
+            # transcript_watson,status = ws.transcribe_meeting(request.method, filename,customization_id)
+            # print("transcript_watson_speaker_labels", transcript_watson["speaker_labels"])
+            # print("transcript_alternatives", transcript_watson["results"])
+            print("status: ********************")
+            print(status)
 
             app.logger.info(datetime.now())
             app.logger.info("filename:")
@@ -439,23 +461,33 @@ class Transcribe(Resource):
             app.logger.info("\n")
 
             if status:
-                formatted_transcript = format_transcript(transcript)
-                # print("return: format transcript")
-                app.logger.info(datetime.now())
-                app.logger.info("return: format transcript \n")
+                # formatted_transcript = format_transcript(transcript)
+                # # print("return: format transcript")
+                # app.logger.info(datetime.now())
+                # app.logger.info("return: format transcript \n")
 
-                transcript = {
-                    # "transcript_before_formatting":transcript_before_formatting,
-                    "results": formatted_transcript
-                }
-                transcript.update(transcription_description)
-                ws.save_json(transcript, filename, request.method)
-                # print("save the json file")
+                # transcript = {
+                #     # "transcript_before_formatting":transcript_before_formatting,
+                #     "results": formatted_transcript
+                # }
+                # transcript.update(transcription_description)
+                transcript_results["results"] = transcript
+                transcript_results["meeting_details"] = transcription_description["meeting_details"]
+                transcript_results["recognized_speakers"] = founded_speakers
+                # ws.save_json(transcript, filename, request.method)
+                # Specify the file path
+                file_path = os.path.join(PATH_JSON_MEETING, json_filename)
+                
+                # Write JSON data to the file
+                with open(file_path, 'w') as json_file:
+                    json.dump(transcript_results, json_file, indent=4)
+
+
                 app.logger.info(datetime.now())
                 app.logger.info("save the json file \n")
-                print(transcription_description)
-                transcript = recognize_speaker(filename,transcript,transcription_description,audio_id)
-                transcript = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
+                # print(transcription_description)
+                # transcript = recognize_speaker(filename,transcript,transcription_description,audio_id)
+                # transcript = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
                 # print("recognized speaker.............")
                 app.logger.info(datetime.now())
                 app.logger.info(" recognieze speaker........ \n")
@@ -464,7 +496,7 @@ class Transcribe(Resource):
                 return {"message":TRANSCRIPTION_SUCCESSFUL,
                         "success":True,
                         "is_edited":False,
-                        "data":transcript}, 200
+                        "data":transcript_results}, 200
             else:
                 # return {"message":transcript}, 400
                 return {

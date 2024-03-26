@@ -100,7 +100,7 @@ class RecognizeSpeaker(Resource):
                     # print(speaker_profiles)
 
                     eagle = pveagle.create_recognizer(
-                        access_key="/vF6q06PnydpPi9ITOeF9+PJHKnmOYUGjXCS58glpYgwGJ4CEHRICQ==",
+                        access_key=os.environ.get("PICOVOICE_KEY"),
                         speaker_profiles=speaker_profiles)
 
                     voice_chunk = {

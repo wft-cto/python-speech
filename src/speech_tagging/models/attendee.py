@@ -37,7 +37,8 @@ class AttendeeModel(db.Model):
             "last_name":self.last_name,
             "gender":self.gender,
             "email":self.email,
-            "phone":self.phone
+            "phone":self.phone,
+            "audios":self.audios
         }
 
         return json

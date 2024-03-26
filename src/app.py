@@ -1,6 +1,10 @@
 import dotenv
 import logging
 
+import numpy
+print(numpy.__version__)
+
+
 print('IN')
 
 # import jwt
@@ -29,7 +33,7 @@ from speech_tagging.commons.text_helper import TEXT_FILE_SET
 from speech_tagging.definitions import *
 from speech_tagging.ma import ma
 
-from speech_tagging.resources.user import UserDetail, UserDetailFromEmail,UserLogin
+from speech_tagging.resources.user import UserDetail, UserDetailFromEmail,UserLogin, UserAppleLogin, WixTestUrl
 from speech_tagging.resources.attendee import Attendee, AttendeeVoice, AttendeeRegister, AttendeeDelete
 from speech_tagging.resources.audio import MeetingAudioUpload, MeetingAudio, MeetingAudios, Audio
 from speech_tagging.resources.meeting import Meeting
@@ -97,6 +101,8 @@ app = Flask(__name__,static_folder='speech_tagging/static')
 handler = logging.FileHandler("test.log")  # Create the file logger
 app.logger.addHandler(handler)             # Add it to the built-in logger
 app.logger.setLevel(logging.DEBUG)         # Set the log level to debug
+
+logging.basicConfig(filename='error.log',level=logging.DEBUG)
 
 app.config.update(mail_settings)
 mail = Mail(app)
@@ -180,8 +186,8 @@ def confirm_token(token, expiration=3600):
 api.add_resource(UserDetail, "/user/<int:user_id>")
 api.add_resource(UserDetailFromEmail, "/user-detail/<string:email>")
 api.add_resource(UserLogin, "/login")
-
-
+api.add_resource(UserAppleLogin, "/apple/login")
+api.add_resource(WixTestUrl, "/wix/test/url")
 
 api.add_resource(OrganizationLogin, "/organization-login")
 api.add_resource(OrganizationList, "/organizations")
@@ -630,6 +636,43 @@ def authorize():
            }, 201
 
 
+# @app.route('/speech-meeting-app/apple-login', methods=['POST'])
+# def login():
+
+#     print("In Apple Login")
+
+#     loginDetails = request.get_json()
+
+#     email = loginDetails.email
+
+#     organization = OrganizationModel.query.filter_by(email=email).first()
+
+#     if not organization:
+
+#         while True:
+#             organization_id = strgen.StringGenerator("[\d\w]{10}").render()
+#             old_org_id = OrganizationModel.query.filter_by(organization_id=organization_id).first()
+#             if not old_org_id:
+#                 break
+#         organization = OrganizationModel(email=email,organization_id=organization_id)
+#         organization.save_to_db()
+
+#     else:
+#         return {
+#             "message": "User already exists!!"
+#         }, 400
+
+#     return {"data":
+#         {
+#             "access_token": loginDetails.authorizationCode,
+#             "refresh_token": loginDetails.identityToken,
+#             "id":organization.id,
+#             "organization_id": organization.organization_id
+#         },
+#                "message": "User logged in successfully",
+#                "success": True
+#            }, 201
+
 def send_token_via_mail(user):
     try:
         token = strgen.StringGenerator("[\d\w]{8}").render()
@@ -779,5 +822,6 @@ def reset_password(email):
 
 
 if __name__ == '__main__':
+
     # app.run(port=5000, use_reloader=False, host='0.0.0.0')
      app.run()
