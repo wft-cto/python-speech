@@ -10,7 +10,8 @@ dotenv.load_dotenv(PATH_ENV)
 
 class Watson:
     def __init__(self):
-        authenticator = IAMAuthenticator(os.environ["WATSON_KEY"])
+        watson_key = os.getenv("WATSON_KEY")
+        authenticator = IAMAuthenticator(watson_key)
 
         self._speech_to_text = SpeechToTextV1(
             authenticator=authenticator

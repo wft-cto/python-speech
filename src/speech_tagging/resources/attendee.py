@@ -5,6 +5,9 @@ import shutil
 from speech_tagging.db import db
 import wave
 import struct
+import numpy
+import scipy.cluster
+import scipy.io.wavfile
 
 from flask_restful import Resource
 from flask import request
@@ -28,6 +31,12 @@ from speech_tagging.schemas.audio import AudioModelSchema
 
 import pveagle
 import dotenv
+
+
+# For using the MFCC feature selection
+from python_speech_features import mfcc
+from sklearn import preprocessing
+from sklearn.mixture import GaussianMixture
 
 dotenv.load_dotenv(PATH_ENV)
 
@@ -224,14 +233,6 @@ class AttendeeVoice(Resource):
         voice_list = attendee_voice["voice_list"]
         attendee_obj = AttendeeModel.find_by_id(attendee_id)
 
-        FEEDBACK_TO_DESCRIPTIVE_MSG = {
-            pveagle.EagleProfilerEnrollFeedback.AUDIO_OK: 'Good audio',
-            pveagle.EagleProfilerEnrollFeedback.AUDIO_TOO_SHORT: 'Insufficient audio length',
-            pveagle.EagleProfilerEnrollFeedback.UNKNOWN_SPEAKER: 'Different speaker in audio',
-            pveagle.EagleProfilerEnrollFeedback.NO_VOICE_FOUND: 'No voice found in audio',
-            pveagle.EagleProfilerEnrollFeedback.QUALITY_ISSUE: 'Low audio quality due to bad microphone or environment'
-        }
-
         if not AttendeeModel.find_by_id(attendee_id):
             print("HERE")
             return {"message":ATTENDEE_DOES_NOT_EXIST.format(attendee_id)}
@@ -245,7 +246,7 @@ class AttendeeVoice(Resource):
             # print("HERE")
             audio_object,extension = create_audio_segment_object(audio_filename)
 
-            filename = attendee_obj.first_name + '-' + str(attendee_id) + '.txt'
+            filename = attendee_obj.first_name + '-' + str(attendee_id) + '.gmm'
             # print(filename)
             all_speaker_files = get_all_filename_from_folder(SPEAKER_FOLDER)
             # print(all_speaker_files)
@@ -266,71 +267,102 @@ class AttendeeVoice(Resource):
                 trimmed_audio = trim_and_save_audio_from_chunk(audio_object,attendee_id,'wav',voice_chunk,audio_filename.split('.')[0], PATH_ATTENDEE_VOICE_SAMPLE)
                 print(trimmed_audio)
 
-
                 try:
-                    # print("Model Path +++++++++", args.access_key, args.model_path, args.library_path)
-                    eagle_profiler = pveagle.create_profiler(
-                        access_key=os.environ.get("PICOVOICE_KEY"))
-                    # print("profiler created")
-                except pveagle.EagleError as e:
-                    print("Failed to initialize EagleProfiler: ", e)
-                    raise
 
-                print('Eagle version: %s' % eagle_profiler.version)
+                    # MFCC
+                    print("Into the biometrics route.")
 
-                try:
-                    print("Eagle Sample Rate on storing it :", eagle_profiler.sample_rate)
-                    enroll_percentage = 0.0
+                    # directory = os.fsencode(user_directory)
+                    features = numpy.asarray(())
 
-                    with wave.open(trimmed_audio, mode="rb") as wav_file:
-                        # print('open')
-                        channels = wav_file.getnchannels()
-                        sample_width = wav_file.getsampwidth()
-                        num_frames = wav_file.getnframes()
-                        # print("channels>>>>>",channels, "smaple_width>>>>", sample_width, "num_frames>>>>",num_frames)
+                    if trimmed_audio.endswith(".wav"):
+                        print("[biometrics] : Reading audio files for processing ...")
+                        (rate, signal) = scipy.io.wavfile.read(trimmed_audio)
 
-                        if wav_file.getframerate() != eagle_profiler.sample_rate:
-                            raise ValueError(
-                            "Audio file should have a sample rate of %d. got %d" % (sample_rate, wav_file.getframerate()))
-                        if sample_width != 2:
-                            raise ValueError("Audio file should be 16-bit. got %d" % sample_width)
-                        if channels == 2:
-                            print("Eagle processes single-channel audio but stereo file is provided. Processing left channel only.")
+                        extracted_features = extract_features(rate, signal)
 
-                        samples = wav_file.readframes(num_frames)
+                        if features.size == 0:
+                            features = extracted_features
+                        else:
+                            features = numpy.vstack((features, extracted_features))
 
-                    # print(samples)
+                    # GaussianMixture Model
+                    print("[ * ] Building Gaussian Mixture Model ...")
 
-                    frames = struct.unpack('h' * num_frames * channels, samples)
+                    gmm = GaussianMixture(n_components=16,
+                                        max_iter=200,
+                                        covariance_type='diag',
+                                        n_init=3)
 
-                    audio =  frames[::channels]
-                    # print(audio)
-                    enroll_percentage, feedback = eagle_profiler.enroll(audio)
-                    # print("HERE1")
-                    print('Enrolled audio file %s [Enrollment percentage: %.2f%% - Enrollment feedback: %s]'
-                        % (attendee_id, enroll_percentage, FEEDBACK_TO_DESCRIPTIVE_MSG[feedback]))
+                    gmm.fit(features)
+                    username = 'webForte'
+                    print("[ * ] Modeling completed for user :" + filename +
+                        " with data point = " + str(features.shape))
 
-                    while enroll_percentage < 100.0: 
-                        enroll_percentage, feedback = eagle_profiler.enroll(audio)
-                        print('Enrolled audio file %s [Enrollment percentage: %.2f%% - Enrollment feedback: %s]'
-                            % (attendee_id, enroll_percentage, FEEDBACK_TO_DESCRIPTIVE_MSG[feedback]))
+                    # dumping the trained gaussian model
+                    # picklefile = path.split("-")[0]+".gmm"
+                    print("[ * ] Saving model object ...")
+                    pickle.dump(gmm, open(PATH_SPEAKER_RECOGNITION + '/' + str(filename), "wb"), protocol=None)
+                    print("[ * ] Object has been successfully written to Models/" +
+                        filename + ".gmm ...")
+                    print("\n\n[ * ] User has been successfully enrolled ...")
 
-                    if enroll_percentage < 100.0:
-                        print('Failed to create speaker profile. Insufficient enrollment percentage: %.2f%%. '
-                            'Please add more audio files for enrollment.' % enroll_percentage)
-                    else:
-                        speaker_profile = eagle_profiler.export()
-                        # attendee_obj.voice_id = speaker_profile
+                    features = numpy.asarray(())
 
-                        if filename in all_speaker_files:
-                            with open(PATH_SPEAKER_RECOGNITION+ '/' +filename , 'wb') as f:
-                                f.write(speaker_profile.to_bytes())
-                            print('Speaker profile is saved to', speaker_profile)
+                    return "User has been successfully enrolled ...!!"
 
-                        else: 
-                            with open(PATH_SPEAKER_RECOGNITION+str('/'+ attendee_obj.first_name + '-' +  str(attendee_id))+'.txt' , 'wb') as f:
-                                f.write(speaker_profile.to_bytes())
-                            print('Speaker profile is saved to', speaker_profile)
+                    # print("Eagle Sample Rate on storing it :", eagle_profiler.sample_rate)
+                    # enroll_percentage = 0.0
+
+                    # with wave.open(trimmed_audio, mode="rb") as wav_file:
+                    #     # print('open')
+                    #     channels = wav_file.getnchannels()
+                    #     sample_width = wav_file.getsampwidth()
+                    #     num_frames = wav_file.getnframes()
+                    #     # print("channels>>>>>",channels, "smaple_width>>>>", sample_width, "num_frames>>>>",num_frames)
+
+                    #     if wav_file.getframerate() != eagle_profiler.sample_rate:
+                    #         raise ValueError(
+                    #         "Audio file should have a sample rate of %d. got %d" % (sample_rate, wav_file.getframerate()))
+                    #     if sample_width != 2:
+                    #         raise ValueError("Audio file should be 16-bit. got %d" % sample_width)
+                    #     if channels == 2:
+                    #         print("Eagle processes single-channel audio but stereo file is provided. Processing left channel only.")
+
+                    #     samples = wav_file.readframes(num_frames)
+
+                    # # print(samples)
+
+                    # frames = struct.unpack('h' * num_frames * channels, samples)
+
+                    # audio =  frames[::channels]
+                    # # print(audio)
+                    # enroll_percentage, feedback = eagle_profiler.enroll(audio)
+                    # # print("HERE1")
+                    # print('Enrolled audio file %s [Enrollment percentage: %.2f%% - Enrollment feedback: %s]'
+                    #     % (attendee_id, enroll_percentage, FEEDBACK_TO_DESCRIPTIVE_MSG[feedback]))
+
+                    # while enroll_percentage < 100.0: 
+                    #     enroll_percentage, feedback = eagle_profiler.enroll(audio)
+                    #     print('Enrolled audio file %s [Enrollment percentage: %.2f%% - Enrollment feedback: %s]'
+                    #         % (attendee_id, enroll_percentage, FEEDBACK_TO_DESCRIPTIVE_MSG[feedback]))
+
+                    # if enroll_percentage < 100.0:
+                    #     print('Failed to create speaker profile. Insufficient enrollment percentage: %.2f%%. '
+                    #         'Please add more audio files for enrollment.' % enroll_percentage)
+                    # else:
+                    #     speaker_profile = eagle_profiler.export()
+                    #     # attendee_obj.voice_id = speaker_profile
+
+                    #     if filename in all_speaker_files:
+                    #         with open(PATH_SPEAKER_RECOGNITION+ '/' +filename , 'wb') as f:
+                    #             f.write(speaker_profile.to_bytes())
+                    #         print('Speaker profile is saved to', speaker_profile)
+
+                    #     else: 
+                    #         with open(PATH_SPEAKER_RECOGNITION+str('/'+ attendee_obj.first_name + '-' +  str(attendee_id))+'.txt' , 'wb') as f:
+                    #             f.write(speaker_profile.to_bytes())
+                    #         print('Speaker profile is saved to', speaker_profile)
 
                         # audioObj = AudioModel.find_by_id(audio_id)
 
@@ -357,14 +389,6 @@ class AttendeeVoice(Resource):
 
                 except Exception  as e:
                     print('Error: ', e)
-                except pveagle.EagleActivationLimitError:
-                    print('AccessKey has reached its processing limit')
-                except pveagle.EagleError as e:
-                    print('Failed to perform enrollment: ', e)
-                finally:
-                    eagle_profiler.delete()
-
-
 
             # del audio_object
         except Exception as e:
@@ -372,6 +396,58 @@ class AttendeeVoice(Resource):
             return {"message":VOICE_SAMPLE_SAVE_FAIL}, 500
 
         return {"message":VOICE_SAMPLE_REGISTERED}, 200
+
+
+def calculate_delta(array):
+    """Calculate and returns the delta of given feature vector matrix
+    (https://appliedmachinelearning.blog/2017/11/14/spoken-speaker-identification-based-on-gaussian-mixture-models-python-implementation/)"""
+
+    print("[Delta] : Calculating delta")
+
+    rows, cols = array.shape
+    deltas = numpy.zeros((rows, 20))
+    N = 2
+    for i in range(rows):
+        index = []
+        j = 1
+        while j <= N:
+            if i-j < 0:
+                first = 0
+            else:
+                first = i-j
+            if i+j > rows - 1:
+                second = rows - 1
+            else:
+                second = i+j
+            index.append((second, first))
+            j += 1
+        deltas[i] = (array[index[0][0]]-array[index[0][1]] +
+                     (2 * (array[index[1][0]]-array[index[1][1]]))) / 10
+    return deltas
+
+
+def extract_features(rate, signal):
+    print("[extract_features] : Exctracting featureses ...")
+
+    mfcc_feat = mfcc(signal,
+                     rate,
+                     winlen=0.020,  # remove if not requred
+                     preemph=0.95,
+                     numcep=20,
+                     nfft=1024,
+                     ceplifter=15,
+                     highfreq=6000,
+                     nfilt=55,
+
+                     appendEnergy=False)
+
+    mfcc_feat = preprocessing.scale(mfcc_feat)
+
+    delta_feat = calculate_delta(mfcc_feat)
+
+    combined_features = numpy.hstack((mfcc_feat, delta_feat))
+
+    return combined_features
 
 
 # class AttendeeDetail(Resource):
@@ -446,6 +522,19 @@ class AttendeeDelete(Resource):
             print(audios)
 
             attendee_obj = AttendeeModel.find_by_id(attendee_id)
+
+            attendee_voice_file = attendee_obj.first_name + '-' + str(attendee_obj.id) + '.gmm'
+
+            all_audio_files = get_all_filename_from_folder(PATH_SPEAKER_RECOGNITION)
+        
+            print(attendee_obj.first_name)
+
+
+            if attendee_voice_file in all_audio_files:
+                attendee_voice = os.path.join(PATH_SPEAKER_RECOGNITION , attendee_voice_file)
+                print(attendee_voice)
+                os.remove(attendee_voice)
+
             attendee_obj.delete_from_db()
 
         except Exception as e:

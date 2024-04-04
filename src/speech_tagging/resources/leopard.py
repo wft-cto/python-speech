@@ -10,13 +10,15 @@
 #
 
 from pvleopard import create, LeopardActivationLimitError
-from tabulate import tabulate
 from speech_tagging.models.audio import AudioModel
 from speech_tagging.commons import audio_helper
 from speech_tagging.definitions import MEETING_FOLDER, PATH_AUDIO
 from speech_tagging.commons.extract_actions import ExtractAction
 from speech_tagging.commons.entity_recognition import recognize_ents
 import os
+from speechmatics.models import ConnectionSettings
+from speechmatics.batch_client import BatchClient
+from httpx import HTTPStatusError
 
 
 ea = ExtractAction()
@@ -65,8 +67,7 @@ def format_transcript(transcript):
     # # for accessing each object of speaker_labels
     index = 0
     print(transcript[0])
-    print(transcript[0].speaker_tag)
-    initial_speaker = transcript[0].speaker_tag
+    initial_speaker = transcript[0]['alternatives'][0]['speaker']
     print("initial_speaker", initial_speaker)
 
     # timestamps = alternative_data["timestamps"]
@@ -75,26 +76,26 @@ def format_transcript(transcript):
 
         for timestamp,has_more in lookahead(transcript):  #timestamps
             # timestamp.append(speaker_labels[index]["speaker"])          
-            if int(timestamp.speaker_tag) == initial_speaker:
-                print("HERE First")
+            if timestamp['alternatives'][0]['speaker'] == initial_speaker:
+                # print("HERE First")
                    
-                transcript_time_list.append(round(timestamp.start_sec, 2))
-                transcript_time_list.append(round(timestamp.end_sec, 2))
-                transcript_text_list.append(timestamp.word)
-                print(transcript_text_list)
+                transcript_time_list.append(round(timestamp['start_time'], 2))
+                transcript_time_list.append(round(timestamp['end_time'], 2))
+                transcript_text_list.append(timestamp['alternatives'][0]['content'])
+                # print(transcript_text_list)
                 # check whether is it last item of that loop
                 if (has_more == False):
                     print("Last Stamp")
                     # print("last timestamp",timestamp[0])
                     transcript_text = " ".join(transcript_text_list) 
-                    print(transcript_text)
+                    # print(transcript_text)
                     transcript_text = transcript_text.replace("%HESITATION","")
                     transcript_text_original = transcript_text
                     if len(transcript_text) > 0:
                         # print(transcript_text)
                         # get action phrase from the transcripted text
                         action_phrase = ea.check_imperative(transcript_text)
-                        print(action_phrase)
+                        # print(action_phrase)
                         # recognize_entities = None
                         if action_phrase is not None:
                             # here transcript_text is vocal with mark tag
@@ -121,7 +122,7 @@ def format_transcript(transcript):
                         transcript_time_list = []
 
                     
-            elif int(timestamp.speaker_tag) != initial_speaker:
+            elif timestamp['alternatives'][0]['speaker'] != initial_speaker:
                 # print("first speaker mismatch-----",timestamp[0])
                 # print(transcript_text_list)
                 # print(transcript_time_list)
@@ -162,11 +163,11 @@ def format_transcript(transcript):
                 transcript_time_list = []
                 
                 # add first word mismatch to new list 
-                transcript_text_list.append(timestamp.word)
+                transcript_text_list.append(timestamp['alternatives'][0]['content'])
                 
-                transcript_time_list.append(round(timestamp.start_sec, 2))
-                transcript_time_list.append(round(timestamp.end_sec, 2))
-                initial_speaker = timestamp.speaker_tag
+                transcript_time_list.append(round(timestamp['start_time'], 2))
+                transcript_time_list.append(round(timestamp['end_time'], 2))
+                initial_speaker = timestamp['alternatives'][0]['speaker']
                 
                 if (has_more == False):
                     # print("last timestamp",timestamp[0])
@@ -220,59 +221,105 @@ def getTranscribe(audio_id):
 
     print("Audio Path>>>>>>>>",audio_path)
 
-    o = create(
-        access_key=os.environ.get("PICOVOICE_KEY"),
-        enable_automatic_punctuation=False,
-        enable_diarization=True)
+    # Change to your own file
+    LANGUAGE = "en"
 
-    try:
-        transcript, words = o.process_file(audio_path)
-        format_transcripts = format_transcript(words)
-        print("format_transcripts>>>", format_transcripts)
-        # print(words)
-        # Convert the array to the desired format
-        # result_list = []
-        # current_speaker = None
-        # current_vocal = ''
-        # current_start_sec = None
+    # Generate an API key at https://portal.speechmatics.com/manage-access/
+    API_KEY = "v6WluCMSgaT9i81wvz6vgbhc6HwuS8cP"
+    LANGUAGE = "en"
 
-        # for word_data in words:
-        #     if current_speaker is None:
-        #         current_speaker = word_data.speaker_tag
-        #         current_start_sec = round(word_data.start_sec, 2)
-        #         print(current_start_sec)
+    settings = ConnectionSettings(
+        url="https://asr.api.speechmatics.com/v2",
+        auth_token=API_KEY,
+    )
 
-        #     if current_speaker == word_data.speaker_tag:
-        #         current_vocal += word_data.word + ' '
-        #     else:
-        #         # Add the current segment to the result list
-        #         # cur_start_sec = list(current_start_sec)
-        #         # print(type(current_start_sec))
-        #         result_list.append({
-        #             "speaker": current_speaker,
-        #             "from": current_start_sec,
-        #             "to": round(word_data.start_sec, 2),
-        #             "vocal": current_vocal.strip(),
-        #             "action_phrase": []
-        #         })
+    # Define transcription parameters
+    conf = {
+        "type": "transcription",
+        "transcription_config": {
+            "language": LANGUAGE,
+            "diarization": "speaker"
+        }
+    }
 
-        #             # Start a new segment for the next speaker
-        #         current_speaker = word_data.speaker_tag
-        #         current_start_sec = round(word_data.end_sec, 2)
-        #         current_vocal = word_data.word + ' '
+    # Open the client using a context manager
+    with BatchClient(settings) as client:
+        try:
+            job_id = client.submit_job(
+                audio=audio_path,
+                transcription_config=conf
+            )
+            print(f'job {job_id} submitted successfully, waiting for transcript')
 
-        #     # Add the last segment to the result list
-        # result_list.append({
-        #     "speaker": current_speaker,
-        #     "from": current_start_sec,
-        #     "to": round(words[-1].end_sec, 2),
-        #     "vocal": current_vocal.strip(),
-        #     "action_phrase": []
-        # })
+            # Note that in production, you should set up notifications instead of polling.
+            # Notifications are described here: https://docs.speechmatics.com/features-other/notifications
+            transcript = client.wait_for_completion(job_id, transcription_format='json-v2')
+            # To see the full output, try setting transcription_format='json-v2'.
+            # print(transcript['results'])
+            format_transcripts = format_transcript(transcript['results'])
 
-        # print("results>>>>", result_list)
+            return format_transcripts, 1
+        except HTTPStatusError as e:
+            if e.response.status_code == 401:
+                print('Invalid API key - Check your API_KEY at the top of the code!')
+            elif e.response.status_code == 400:
+                print(e.response.json()['detail'])
+            else:
+                raise e
+    
+    # o = create(
+    #     access_key=os.environ.get("PICOVOICE_KEY"),
+    #     enable_automatic_punctuation=False,
+    #     enable_diarization=True)
 
-        return format_transcripts, 1
+    # try:
+    #     transcript, words = o.process_file(audio_path)
+    #     format_transcripts = format_transcript(words)
+    #     print("format_transcripts>>>", format_transcripts)
+    #     # print(words)
+    #     # Convert the array to the desired format
+    #     # result_list = []
+    #     # current_speaker = None
+    #     # current_vocal = ''
+    #     # current_start_sec = None
 
-    except LeopardActivationLimitError:
-        print('AccessKey has reached its processing limit.')
+    #     # for word_data in words:
+    #     #     if current_speaker is None:
+    #     #         current_speaker = word_data.speaker_tag
+    #     #         current_start_sec = round(word_data.start_sec, 2)
+    #     #         print(current_start_sec)
+
+    #     #     if current_speaker == word_data.speaker_tag:
+    #     #         current_vocal += word_data.word + ' '
+    #     #     else:
+    #     #         # Add the current segment to the result list
+    #     #         # cur_start_sec = list(current_start_sec)
+    #     #         # print(type(current_start_sec))
+    #     #         result_list.append({
+    #     #             "speaker": current_speaker,
+    #     #             "from": current_start_sec,
+    #     #             "to": round(word_data.start_sec, 2),
+    #     #             "vocal": current_vocal.strip(),
+    #     #             "action_phrase": []
+    #     #         })
+
+    #     #             # Start a new segment for the next speaker
+    #     #         current_speaker = word_data.speaker_tag
+    #     #         current_start_sec = round(word_data.end_sec, 2)
+    #     #         current_vocal = word_data.word + ' '
+
+    #     #     # Add the last segment to the result list
+    #     # result_list.append({
+    #     #     "speaker": current_speaker,
+    #     #     "from": current_start_sec,
+    #     #     "to": round(words[-1].end_sec, 2),
+    #     #     "vocal": current_vocal.strip(),
+    #     #     "action_phrase": []
+    #     # })
+
+    #     # print("results>>>>", result_list)
+
+    #     return format_transcripts, 1
+
+    # except LeopardActivationLimitError:
+    #     print('AccessKey has reached its processing limit.')

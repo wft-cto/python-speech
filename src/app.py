@@ -2,7 +2,7 @@ import dotenv
 import logging
 
 import numpy
-print(numpy.__version__)
+# print(numpy.__version__)
 
 
 print('IN')
@@ -39,7 +39,7 @@ from speech_tagging.resources.audio import MeetingAudioUpload, MeetingAudio, Mee
 from speech_tagging.resources.meeting import Meeting
 from speech_tagging.resources.organization import (OrganizationLogin, OrganizationDetail,
                                                      OrganizationList, OrganizationDetailById)
-from speech_tagging.resources.train_speaker import TrainSpeaker
+# from speech_tagging.resources.train_speaker import TrainSpeaker
 from speech_tagging.resources.transcribe import Transcribe, UpdateTranscribeJsonFile, GetTextFile
 from speech_tagging.resources.recognize_speaker import RecognizeSpeaker
 from speech_tagging.resources.attendee import AllAttendee
@@ -102,7 +102,7 @@ handler = logging.FileHandler("test.log")  # Create the file logger
 app.logger.addHandler(handler)             # Add it to the built-in logger
 app.logger.setLevel(logging.DEBUG)         # Set the log level to debug
 
-logging.basicConfig(filename='error.log',level=logging.DEBUG)
+# logging.basicConfig(filename='error.log',level=logging.DEBUG)
 
 app.config.update(mail_settings)
 mail = Mail(app)
@@ -210,7 +210,7 @@ api.add_resource(AttendeeVoice, "/attendee-voice")
 api.add_resource(AllAttendee, "/attendees")
 api.add_resource(AttendeeDelete, "/organization/<int:organization_id>/attendee/<int:attendee_id>/delete")
 
-api.add_resource(TrainSpeaker, "/train-attendee")
+# api.add_resource(TrainSpeaker, "/train-attendee")
 
 # api.add_resource(Transcribe, "/transcribe/<string:filename>")
 api.add_resource(Transcribe, "/transcribe/<int:organization_id>/<string:model_name>/<int:audio_id>")
@@ -824,4 +824,4 @@ def reset_password(email):
 if __name__ == '__main__':
 
     # app.run(port=5000, use_reloader=False, host='0.0.0.0')
-     app.run()
+     app.run(port=5002)

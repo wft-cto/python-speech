@@ -2,12 +2,11 @@ import os
 import urllib.request
 
 # EXTERNAL_IP = urllib.request.urlopen('https://ident.me').read().decode('utf8')
-EXTERNAL_IP = urllib.request.urlopen('https://api.ipify.org/').read().decode('utf8')
+# EXTERNAL_IP = urllib.request.urlopen('https://api.ipify.org/').read().decode('utf8')
 # EXTERNAL_IP = '192.168.1.7'
 PORT = 5002
-HOST = 'http://{}:{}'.format(EXTERNAL_IP, PORT)
-BASE_URL_AUDIO_FILE = '{}/audio-file'.format(HOST)
-
+# HOST = 'http://{}:{}'.format(EXTERNAL_IP, PORT)
+# BASE_URL_AUDIO_FILE = '{}/audio-file'
 MEETING_FOLDER = "meeting_audio_files"
 MEETING_FOLDER_EDIT = "meeting_audio_files/edit"
 SPEAKER_FOLDER = 'speaker'
