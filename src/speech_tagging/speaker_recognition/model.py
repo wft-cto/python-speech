@@ -9,7 +9,7 @@ from tensorflow.keras.layers import (
 from keras.layers.core import Lambda, Activation
 from keras.models import Model
 
-from speech_tagging.speaker_recognition import definitions as c
+from src.speech_tagging.speaker_recognition import definitions as c
 
 
 # Block of layers: Conv --> BatchNorm --> ReLU --> Pool

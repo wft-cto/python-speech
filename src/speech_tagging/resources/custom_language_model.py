@@ -5,24 +5,24 @@ from flask_restful import Resource
 from flask import request
 from flask_uploads import UploadNotAllowed
 
-from speech_tagging.schemas.language_model import LanguageSchema
-from speech_tagging.schemas.corpus import CorpusSchema, TextFileSchema
-from speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.commons.messages import *
+from src.speech_tagging.schemas.language_model import LanguageSchema
+from src.speech_tagging.schemas.corpus import CorpusSchema, TextFileSchema
+from src.speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.commons.messages import *
 from sqlalchemy.exc import IntegrityError
-from speech_tagging.models.language_model import LanguageModelModel
-from speech_tagging.models.corpus import CorpusModel
+from src.speech_tagging.models.language_model import LanguageModelModel
+from src.speech_tagging.models.corpus import CorpusModel
 
-from speech_tagging.definitions import CORPUS_FOLDER
-from speech_tagging.commons import audio_helper
-from speech_tagging.commons import text_helper
-from speech_tagging.definitions import *
+from src.speech_tagging.definitions import CORPUS_FOLDER
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.commons import text_helper
+from src.speech_tagging.definitions import *
 import os
 
 
 
-from speech_tagging.commons.utils import get_all_textfile_from_folder
+from src.speech_tagging.commons.utils import get_all_textfile_from_folder
 
 lm_schema = LanguageSchema()
 language_schemas = LanguageSchema(many=True)

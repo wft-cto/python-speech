@@ -2,7 +2,7 @@ import os
 import json
 import pickle
 import shutil
-from speech_tagging.db import db
+from src.speech_tagging.db import db
 import wave
 import struct
 import numpy
@@ -11,23 +11,24 @@ import scipy.io.wavfile
 
 from flask_restful import Resource
 from flask import request
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.models.attendee import AttendeeModel, attendee_audio
-from speech_tagging.models.embedding import EmbeddingModel
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.models.attendee import AttendeeModel, attendee_audio
+from src.speech_tagging.models.embedding import EmbeddingModel
 
-from speech_tagging.schemas.attendee import AttendeeSchema, AttendeeVoiceSchema
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.commons.messages import *
-from speech_tagging.commons.audio_helper import *
-from speech_tagging.commons.utils import get_all_filename_from_folder
+from src.speech_tagging.schemas.attendee import AttendeeSchema, AttendeeVoiceSchema
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.commons.messages import *
+from src.speech_tagging.commons.audio_helper import *
+from src.speech_tagging.commons.utils import get_all_filename_from_folder
+from src.speech_tagging.commons.recognition_helper import delete_embedding_for_user
 
-from speech_tagging.commons import audio_helper
-from speech_tagging.watson_speech import json_helper
-from speech_tagging.commons.utils import get_all_jsonfile_from_folder
-from speech_tagging.definitions import *
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.watson_speech import json_helper
+from src.speech_tagging.commons.utils import get_all_jsonfile_from_folder
+from src.speech_tagging.definitions import *
 
-from speech_tagging.schemas.organization import OrganizationSchema
-from speech_tagging.schemas.audio import AudioModelSchema
+from src.speech_tagging.schemas.organization import OrganizationSchema
+from src.speech_tagging.schemas.audio import AudioModelSchema
 
 import pveagle
 import dotenv
@@ -534,6 +535,8 @@ class AttendeeDelete(Resource):
                 attendee_voice = os.path.join(PATH_SPEAKER_RECOGNITION , attendee_voice_file)
                 print(attendee_voice)
                 os.remove(attendee_voice)
+
+            delete = delete_embedding_for_user(attendee_id)
 
             attendee_obj.delete_from_db()
 

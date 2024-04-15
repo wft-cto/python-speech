@@ -1,7 +1,7 @@
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import SpeechToTextV1
 from ibm_cloud_sdk_core.authenticators import BasicAuthenticator
-from speech_tagging.definitions import PATH_ENV
+from src.speech_tagging.definitions import PATH_ENV
 import os
 import dotenv
 

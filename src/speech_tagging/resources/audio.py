@@ -9,23 +9,23 @@ from flask_restful import Resource
 from flask_uploads import UploadNotAllowed
 from flask import send_file, request,send_from_directory, url_for, jsonify
 
-from speech_tagging.commons import audio_helper
-from speech_tagging.commons.messages import *
-from speech_tagging.commons.utils import get_all_filename_from_folder
-from speech_tagging.definitions import MEETING_FOLDER
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.models.user_registration import User
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.commons.messages import *
+from src.speech_tagging.commons.utils import get_all_filename_from_folder
+from src.speech_tagging.definitions import MEETING_FOLDER
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.models.user_registration import User
 
 # from app import token_required
 
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.schemas.audio import AudioSchema
-from speech_tagging.schemas.audio import AudioModelSchema
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.schemas.audio import AudioSchema
+from src.speech_tagging.schemas.audio import AudioModelSchema
 
-from speech_tagging.watson_speech import json_helper
-from speech_tagging.commons.utils import get_all_jsonfile_from_folder
-from speech_tagging.definitions import *
+from src.speech_tagging.watson_speech import json_helper
+from src.speech_tagging.commons.utils import get_all_jsonfile_from_folder
+from src.speech_tagging.definitions import *
 
 
 audio_schema = AudioSchema()
@@ -142,6 +142,12 @@ class MeetingAudio(Resource):
 
         try:
             os.remove(audio_helper.get_path(filename, folder=MEETING_FOLDER))
+            basename = filename.split(".")[0]
+            json_filename = ".".join((basename, "json"))
+            all_json_files = get_all_jsonfile_from_folder(MEETING_FOLDER)
+            if json_filename in all_json_files:
+                json_filepath = os.path.join(PATH_JSON_MEETING,json_filename)
+                os.remove(json_filepath)
             return {"message": AUDIO_DELETED.format(filename)}, 200
         except FileNotFoundError:
             return {"message": AUDIO_NOT_FOUND.format(filename)}, 404

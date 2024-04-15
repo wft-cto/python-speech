@@ -1,5 +1,5 @@
-from speech_tagging.ma import ma
-from speech_tagging.models.user_registration import User
+from src.speech_tagging.ma import ma
+from src.speech_tagging.models.user_registration import User
 
 
 class UserSchema(ma.ModelSchema):

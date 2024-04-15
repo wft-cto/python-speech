@@ -1,7 +1,7 @@
 from flask_restful import Resource,reqparse
 from flask import request
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.schemas.organization import OrganizationSchema
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.schemas.organization import OrganizationSchema
 from validate_email import validate_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager,login_user

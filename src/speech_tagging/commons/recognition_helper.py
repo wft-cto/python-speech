@@ -8,18 +8,19 @@ import numpy
 from scipy.spatial.distance import cdist
 
 from flask import current_app as app
-from speech_tagging.definitions import *
-# from speech_tagging.speaker_recognition.manager import manager
-from speech_tagging.models.attendee import AttendeeModel
-from speech_tagging.commons import audio_helper
-from speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
+from src.speech_tagging.definitions import *
+from src.speech_tagging.speaker_recognition.manager import manager
+from src.speech_tagging.models.attendee import AttendeeModel
+from src.speech_tagging.models.embedding import EmbeddingModel
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
 import shutil
 
 import os
 import pveagle
 import wave
 import struct
-from speech_tagging.models.audio import AudioModel
+from src.speech_tagging.models.audio import AudioModel
 from collections import Counter
 
 import scipy.cluster
@@ -60,6 +61,42 @@ def delete_embedding_for_user(user_id):
     data = pickle.loads(open(file, "rb").read())
     speaker = data["speaker"]
     speaker_embedding = data['embedding']
+    print("speakers", speaker)
+    print("speaker_embedding", speaker_embedding)
+
+    try: 
+        speaker_index = speaker.index(user_id)
+
+        # speaker_indexes = [i for i, e in enumerate(speaker) if e == user_id]
+
+        print("speaker_index", speaker_index)
+        if speaker_index:
+            speaker.pop(speaker_index)
+            speaker_embedding.pop(speaker_index)
+            # del speaker[speaker_index]
+
+            # del speaker_embedding[speaker_index]
+            # np_speakers = np.array(speaker)
+
+            wfile = open(file,"wb")
+            filter_data = {"speaker":speaker,"embedding":speaker_embedding}
+            wfile.write(pickle.dumps(filter_data))
+            wfile.close()
+
+            embed_obj = EmbeddingModel.find_by_attendee_id(user_id)
+
+            for obj in embed_obj:
+                obj.delete_from_db()
+            
+            data_new = pickle.loads(open(file, "rb").read())
+            print("speakers after del", data_new["speaker"])
+
+            return {"Message": "Embedding deleted successfully."}, 200
+    except Exception as e:
+
+        return {"Error": str(e)}, 400
+
+    
 
 
 
@@ -76,8 +113,10 @@ def best_speaker_match(speech_encodings, speech_to_compare, tolerance):
     :return:
     """
     distances = find_distance(speech_encodings, [speech_to_compare])
+    print("distances", distances)
     if distances is not None:
         min_dist = min(distances)
+        print("min_dist", min_dist)
         if min_dist < tolerance:
             return np.where(distances == min_dist)[0][0], min_dist
 
@@ -86,70 +125,72 @@ def best_speaker_match(speech_encodings, speech_to_compare, tolerance):
         return None, None
 
 
-# def recognize():
-#     """
-#     Find speaker id by comparing it with
-#     :return:
-#     """
+def recognize():
+    """
+    Find speaker id by comparing it with
+    :return:
+    """
 
-#     def recognize_speaker():
-#         ""
-#         file = random.choice(files)
-#         try:
-#             embedding = manager.get_embeddings_from_wav(file)
-#             speaker_loc, dist = best_speaker_match(all_embedding, embedding, tolerance=0.27)
-#             if speaker_loc is None:
-#                 speaker_id = "Unknown"
-#             else:
-#                 speaker_id = all_speaker[speaker_loc]
-#             speakers.append(speaker_id)
-#         except Exception as err:
-#             print(file)
-#             print(err)
+    def recognize_speaker():
+        ""  
+        file = random.choice(files)
+        try:
+            embedding = manager.get_embeddings_from_wav(file)
+            speaker_loc, dist = best_speaker_match(all_embedding, embedding, tolerance=0.5)
+            if speaker_loc is None:
+                speaker_id = "Unknown"
+            else:
+                speaker_id = all_speaker[speaker_loc]
+            speakers.append(speaker_id)
+        except Exception as err:
+            print(file)
+            print(err)
 
-#     # Load data
-#     all_speaker, all_embedding = load_data()
-#     result = {}
-#     sub_dirs = glob.glob(os.path.join(PATH_SPEAKERS, "*"))
-#     for sub_dir in sub_dirs:
-#         speaker = os.path.basename(sub_dir)
-#         files = glob.glob(os.path.join(sub_dir, "*"))
-#         speakers = []
-#         if len(files) > 15:
-#             for _ in range(15):
-#                 recognize_speaker()
-#         else:
-#             for _ in range(len(files)):
-#                 recognize_speaker()
-#         if len(speakers) == 0:
-#             speakers = ["Unknown"]
-#         final_speaker_id = max(set(speakers), key=speakers.count)
-#         result.update({speaker: final_speaker_id})
-#     return result
+    # Load data
+    all_speaker, all_embedding = load_data()
+    result = {}
+    sub_dirs = glob.glob(os.path.join(PATH_SPEAKERS, "*"))
+    for sub_dir in sub_dirs:
+        speaker = os.path.basename(sub_dir)
+        files = glob.glob(os.path.join(sub_dir, "*"))
+        speakers = []
+        if len(files) > 15:
+            for _ in range(15):
+                recognize_speaker()
+        else:
+            for _ in range(len(files)):
+                recognize_speaker()
+        if len(speakers) == 0:
+            speakers = ["Unknown"]
+        final_speaker_id = max(set(speakers), key=speakers.count)
+        result.update({speaker: final_speaker_id})
+    return result
 
 
-# def final_speakers():
-#     """
+def final_speakers():
+    """
 
-#     :return:
-#     """
-#     speakers = recognize()
+    :return:
+    """
 
-#     final_speakers = {}
-#     for key, value in speakers.items():
-#         if value != "Unknown":
-#             attendee = AttendeeModel.find_by_id(value)
-#             final_speakers.update({key: attendee.json()})
-#         else:
-#             final_speakers.update({key: value})
+    print("In the final speakers!!")
+    speakers = recognize()
 
-#     app.logger.info(datetime.now())
-#     app.logger.info('final speaker detail :')
-#     app.logger.info(final_speakers)
-#     app.logger.info("\n")
+    final_speakers = {}
+    for key, value in speakers.items():
+        if value != "Unknown":
+            attendee = AttendeeModel.find_by_id(value)
+            final_speakers.update({key: attendee.json()})
+        else:
+            final_speakers.update({key: value})
 
-#     shutil.rmtree(PATH_SPEAKERS)
-#     return final_speakers
+    app.logger.info(datetime.now())
+    app.logger.info('final speaker detail :')
+    app.logger.info(final_speakers)
+    app.logger.info("\n")
+
+    shutil.rmtree(PATH_SPEAKERS)
+    return final_speakers
 
 
 # def read_file(file_name, sample_rate):
@@ -326,6 +367,7 @@ def find_speakers(transcript, audio_object, audio_id):
                 os.remove(audio_clip_path)
             os.rmdir(clips_folder_path)
 
+        print("AudioModel", recognization_results['S1']['audios'])
         print("recognization_results>>>>>",recognization_results)
         return recognization_results
 
@@ -416,13 +458,21 @@ def match_speakers(transcript, audio_object, audio_id):
         audio_obj,extension = audio_helper.create_audio_segment_object(audio_filename)
         all_voice_samples = get_all_filename_from_folder(PATH_ATTENDEE_VOICE_SAMPLE)
 
+        recognization_results = {}
+
+        for segment in transcribe_json:
+            recognization_results[segment['speaker']] = 'Unknown'
+
         for segment in transcribe_json:
             # segment['speaker_recognized'] = False
             # if isinstance(segment['speaker'], int):
             start = segment['from']
             end = segment['to']
             print(segment)
-            if (end - start > 1):
+
+            results_indexes = []
+
+            if (end - start > 1) and recognization_results[segment['speaker']] == 'Unknown':
 
                 voice_chunk = {
                     "from": segment['from'],
@@ -436,10 +486,54 @@ def match_speakers(transcript, audio_object, audio_id):
                     cur_voice_file = os.path.join(PATH_ATTENDEE_VOICE_SAMPLE, voice_sample, voice_file[0])
                     similarity = speaker_match(trimmed_audio, cur_voice_file)
                     print(f"Similarity {voice_sample}: {similarity}")
+                    results_indexes.append(similarity)
 
+                print("results>>", results_indexes)
+
+                print("result>>", max(results_indexes))
+
+                largest_value = max(results_indexes)
+
+                if largest_value > -1.8:
+            
+                    identified_user = results_indexes.index(largest_value)
+
+                    print("identified_user>>", identified_user)
+
+                    speaker_id = all_voice_samples[identified_user]
+
+                    print("speaker_id", speaker_id)
+
+                    # segment['speaker_recognized'] = True
+                    speaker_id1 = int(speaker_id)
+                    attendee = AttendeeModel.find_by_id(int(speaker_id1))
+                    print("attendee", attendee)
+                    if attendee is not None:
+                        print("Heree")
+                        recognization_results[segment["speaker"]] = attendee.json()
+                    else:
+                        recognization_results[segment["speaker"]] = "Unknown"
+
+                else:
+                    identified_user = None
+                    recognization_results[segment["speaker"]] = "Unknown"
 
     except Exception as e:
         print("Error :", e)
+
+    finally:
+        # print(transcript)
+        clips_folder_path = os.path.join(PATH_AUDIO_CLIPS, str(audio_id))
+        all_speaker_audio_clips = get_all_filename_from_folder(PATH_AUDIO_CLIPS)
+        if str(audio_id) in all_speaker_audio_clips:
+            all_audio_clips_files = get_all_filename_from_folder(clips_folder_path)
+            for audio_clip in all_audio_clips_files: 
+                audio_clip_path = os.path.join(clips_folder_path, audio_clip)
+                os.remove(audio_clip_path)
+            os.rmdir(clips_folder_path)
+
+        print("recognization_results>>>>>",recognization_results)
+        return recognization_results
 
 
 if __name__ == "__main__":

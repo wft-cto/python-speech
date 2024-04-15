@@ -1,5 +1,5 @@
-from speech_tagging.db import db
-from speech_tagging.models.attendee import AttendeeModel
+from src.speech_tagging.db import db
+from src.speech_tagging.models.attendee import AttendeeModel
 
 class EmbeddingModel(db.Model):
     __tablename__ = "embeddings"

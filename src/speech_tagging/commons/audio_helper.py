@@ -12,9 +12,11 @@ from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from flask_uploads import UploadSet, AUDIO, TEXT
 
+import shutil
+
 import wave
 
-from speech_tagging.definitions import *
+from src.speech_tagging.definitions import *
 
 AUDIO = AUDIO + ("webm", "mp4", "m4a")
 
@@ -238,7 +240,10 @@ def trim_and_save_audio_from_chunk(audio_object,id_,extension, chunk: dict, audi
     
     file_folder = os.path.join(path,str(id_))
 
-    if not os.path.exists(file_folder):
+    if os.path.exists(file_folder):
+        shutil.rmtree(file_folder)
+        os.makedirs(file_folder)
+    else: 
         os.makedirs(file_folder)
     if end - start > 1:
         try: 
@@ -247,6 +252,7 @@ def trim_and_save_audio_from_chunk(audio_object,id_,extension, chunk: dict, audi
 
             trimmed_audio = audio_object[start * 1000:end * 1000]
             trimmed_audio = trimmed_audio.set_frame_rate(16000)
+
             # print(file_name)
             # print(file_path)
             trimmed_audio.export(file_path, format=extension)

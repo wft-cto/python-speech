@@ -7,8 +7,8 @@ from marshmallow import ValidationError
 
 from flask_uploads import UploadSet, TEXT
 
-from speech_tagging.definitions import *
-from speech_tagging.commons.utils import get_all_json_filepaths
+from src.speech_tagging.definitions import *
+from src.speech_tagging.commons.utils import get_all_json_filepaths
 
 TEXT_FILE_SET = UploadSet("files", TEXT)  # set name and allowed extensions
 

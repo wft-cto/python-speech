@@ -1,6 +1,6 @@
 import os
 import dotenv
-from speech_tagging.definitions import PATH_ENV
+from src.speech_tagging.definitions import PATH_ENV
 
 dotenv.load_dotenv(PATH_ENV)
 

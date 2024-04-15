@@ -1,9 +1,9 @@
 from flask import request, url_for, g
 from flask_restful import Resource
 from flask_jwt_extended import create_access_token, create_refresh_token
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.schemas.organization import OrganizationSchema
-from speech_tagging.google_oa import google
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.schemas.organization import OrganizationSchema
+from src.speech_tagging.google_oa import google
 
 organization_schema = OrganizationSchema()
 

@@ -1,5 +1,5 @@
-from speech_tagging.ma import ma
-from speech_tagging.models.attendee import AttendeeModel
+from src.speech_tagging.ma import ma
+from src.speech_tagging.models.attendee import AttendeeModel
 from marshmallow import Schema, fields
 
 

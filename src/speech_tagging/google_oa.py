@@ -1,6 +1,6 @@
 import os
 from flask import g
-from speech_tagging.oa import oauth
+from src.speech_tagging.oa import oauth
 
 
 google = oauth.register(

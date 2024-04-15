@@ -1,13 +1,13 @@
 from flask_restful import Resource
 from flask import request
-from speech_tagging.models.meeting import MeetingModel
-from speech_tagging.schemas.meeting import MeetingSchema
-from speech_tagging.commons.utils import *
-from speech_tagging.definitions import *
-from speech_tagging.commons.messages import *
+from src.speech_tagging.models.meeting import MeetingModel
+from src.speech_tagging.schemas.meeting import MeetingSchema
+from src.speech_tagging.commons.utils import *
+from src.speech_tagging.definitions import *
+from src.speech_tagging.commons.messages import *
 
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.commons import audio_helper
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.commons import audio_helper
 
 meeting_schema = MeetingSchema()
 

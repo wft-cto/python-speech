@@ -1,7 +1,7 @@
-from speech_tagging.ma import ma
-from speech_tagging.models.language_model import LanguageModelModel
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.models.corpus import CorpusModel
+from src.speech_tagging.ma import ma
+from src.speech_tagging.models.language_model import LanguageModelModel
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.models.corpus import CorpusModel
 from marshmallow import fields, Schema
 from werkzeug.datastructures import FileStorage
 

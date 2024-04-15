@@ -9,11 +9,11 @@ from flask import current_app as app
 
 from ibm_watson import SpeechToTextV1
 
-from speech_tagging.definitions import PATH_ENV,PATH_AUDIO
-from speech_tagging.commons.audio_helper import get_extension
-from speech_tagging.commons.messages import *
-from speech_tagging.definitions import MEETING_FOLDER,MEETING_FOLDER_EDIT,PATH_JSON_MEETING,PATH_JSON_MEETING_EDIT
-from speech_tagging.watson_speech.watson import Watson
+from src.speech_tagging.definitions import PATH_ENV,PATH_AUDIO
+from src.speech_tagging.commons.audio_helper import get_extension
+from src.speech_tagging.commons.messages import *
+from src.speech_tagging.definitions import MEETING_FOLDER,MEETING_FOLDER_EDIT,PATH_JSON_MEETING,PATH_JSON_MEETING_EDIT
+from src.speech_tagging.watson_speech.watson import Watson
 
 dotenv.load_dotenv(PATH_ENV)
 

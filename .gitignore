@@ -7,12 +7,14 @@ src/speech_tagging/.env
 src/speech_tagging/static/
 Pipfile
 Pipfile.lock
-# /venv/
+/venv/
 /venv/*
 /myenv/
 /myenv/*
 migrations
 test.log
+error.log
+requirements1.txt
 
 mysql_data/
 static/

@@ -2,8 +2,8 @@ import librosa
 import numpy as np
 from scipy.signal import lfilter
 
-from speech_tagging.speaker_recognition import definitions as c
-from speech_tagging.speaker_recognition import sigproc
+from src.speech_tagging.speaker_recognition import definitions as c
+from src.speech_tagging.speaker_recognition import sigproc
 
 
 def load_wav(filename, sample_rate):

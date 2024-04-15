@@ -1,7 +1,7 @@
 import glob
 import os
 import time
-from speech_tagging.definitions import PATH_AUDIO, PATH_JSON, PATH_FILES
+from src.speech_tagging.definitions import PATH_AUDIO, PATH_JSON, PATH_FILES
 import numpy as np
 
 

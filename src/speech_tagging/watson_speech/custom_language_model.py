@@ -1,6 +1,6 @@
 import json
 import time
-from speech_tagging.watson_speech.watson import Watson
+from src.speech_tagging.watson_speech.watson import Watson
 
 
 class CustomLanguageModel(Watson):

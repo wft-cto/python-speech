@@ -6,23 +6,23 @@ import werkzeug
 import shutil
 from flask import request
 
-from speech_tagging.db import db
+from src.speech_tagging.db import db
 
-from speech_tagging.models.embedding import EmbeddingModel
-from speech_tagging.models.attendee import AttendeeModel, attendee_audio
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.commons.messages import ATTENDEE_DOES_NOT_EXIST,TRAINING_SUCCESSFUL, TRAINING_FAILED
-from speech_tagging.commons.recognition_helper import load_data
+from src.speech_tagging.models.embedding import EmbeddingModel
+from src.speech_tagging.models.attendee import AttendeeModel, attendee_audio
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.commons.messages import ATTENDEE_DOES_NOT_EXIST,TRAINING_SUCCESSFUL, TRAINING_FAILED
+from src.speech_tagging.commons.recognition_helper import load_data, delete_embedding_for_user
 
 from flask_restful import Resource,reqparse
-from speech_tagging.speaker_recognition.manager import manager
-from speech_tagging.definitions import PATH_ATTENDEE_VOICE_SAMPLE, PATH_EMBEDDING, PATH_JSON_MEETING_EDIT
-from speech_tagging.commons.utils import get_all_filepaths, get_all_jsonfile_from_folder
-from speech_tagging.commons.messages import *
-from speech_tagging.commons import audio_helper
-from speech_tagging.watson_speech import json_helper
-from speech_tagging.definitions import *
+from src.speech_tagging.speaker_recognition.manager import manager
+from src.speech_tagging.definitions import PATH_ATTENDEE_VOICE_SAMPLE, PATH_EMBEDDING, PATH_JSON_MEETING_EDIT
+from src.speech_tagging.commons.utils import get_all_filepaths, get_all_jsonfile_from_folder
+from src.speech_tagging.commons.messages import *
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.watson_speech import json_helper
+from src.speech_tagging.definitions import *
 
 
 # def replace_attendee_detail_by_unknown(transcript_data,attendee_id):
@@ -33,6 +33,14 @@ from speech_tagging.definitions import *
 #             if value["id"] == attendee_id:
 #                 transcript_data["recognized_speakers"][key] = "Unknown"
 #     return transcript_data
+
+class DeleteAttendeeEmbeding(Resource):
+    @classmethod
+    def delete(cls, attendee_id):
+        delete = delete_embedding_for_user(attendee_id)
+
+        return delete
+
 
 class TrainSpeaker(Resource):
     parser = reqparse.RequestParser()
@@ -49,7 +57,7 @@ class TrainSpeaker(Resource):
                         required=True,
                         help='This field cannot be blank!')
     parser.add_argument('speaker_id',
-                        type=int,
+                        type=str,
                         required=True,
                         help='This field cannot be blank!')
     parser.add_argument('start_time',
@@ -126,11 +134,15 @@ class TrainSpeaker(Resource):
             
         
         speaker_chunk = json_helper.get_speaker_speak_time(speaker_id,json_filepath)
-        # print("speaker chuncks================>",speaker_chunk)
+        print("speaker chuncks================>",speaker_chunk)
+
+        chunk = {
+            "from" : start_time,
+            "to": end_time        }
     
         audio_object, ext = audio_helper.create_audio_segment_object(filename)
-        for chunk in speaker_chunk:
-            audio_helper.trim_and_save_audio_from_chunk(audio_object,attendee_id, ext, chunk, filename,
+        # for chunk in speaker_chunk:
+        audio_helper.trim_and_save_audio_from_chunk(audio_object,attendee_id, ext, chunk, filename,
                                                         PATH_ATTENDEE_VOICE_SAMPLE)
 
 
@@ -138,15 +150,21 @@ class TrainSpeaker(Resource):
         embedding_file = os.path.join(PATH_EMBEDDING,"embedding.pickle")
 
         if os.path.exists(embedding_file):
-            data = pickle.loads(open(embedding_file,"rb").read())
-            speaker = data["speaker"]
-            speaker_embedding = data['embedding']
+            if os.stat(embedding_file).st_size == 0:
+                speaker = []
+                speaker_embedding = []
+            else:
+                data = pickle.loads(open(embedding_file,"rb").read())
+                speaker = data["speaker"]
+                speaker_embedding = data['embedding']
         else:
             speaker = []
             speaker_embedding = []
-        # print("speaker and speaker_embedding",speaker,speaker_embedding)
+        print("speaker and speaker_embedding",speaker,speaker_embedding)
 
         try:
+            # speaker = []
+            # speaker_embedding = []
             for voice_sample in voice_samples:
                 try:
                     embedding = manager.get_embeddings_from_wav(voice_sample)
@@ -154,30 +172,30 @@ class TrainSpeaker(Resource):
                     continue
                 filename = os.path.basename(voice_sample)
 
-                if not EmbeddingModel.find_by_filename(filename):
+                if not EmbeddingModel.find_by_attendee_id(attendee_id):
                     speaker.append(attendee_id)
                     speaker_embedding.append(embedding)
-
+                    print("New Attendee")
             wfile = open(embedding_file,"wb")
             data = {"speaker":speaker,"embedding":speaker_embedding}
             wfile.write(pickle.dumps(data))
             wfile.close()
             
         except Exception :
-            return {"Message":TRAINING_FAILED.format(attendee_id)},400
+            return {"Message":TRAINING_FAILED.format(attendee_id), "Error": str(e)},400
         
-        # keep record of audio id and attendee id
-        try:
-            statement = attendee_audio.insert().values(audio_id=audio_id, attendee_id=attendee_id)
-            try:
-                db.session.execute(statement)
-                db.session.commit()
-            except Exception as e:
-                # return {"Message":"Something error in server"},500
-                # return {"Message":str(e)},500
-                pass
-        except:
-            pass
+        # # keep record of audio id and attendee id
+        # try:
+        #     statement = attendee_audio.insert().values(audio_id=audio_id, attendee_id=attendee_id)
+        #     try:
+        #         db.session.execute(statement)
+        #         db.session.commit()
+        #     except Exception as e:
+        #         # return {"Message":"Something error in server"},500
+        #         # return {"Message":str(e)},500
+        #         pass
+        # except:
+        #     pass
     
 
         # Keep record of voice samples of the attendee
@@ -193,7 +211,7 @@ class TrainSpeaker(Resource):
 
             del emb
 
-        return {"message":TRAINING_SUCCESSFUL.format(attendee_id)},200
+        return {"success":True, "message":TRAINING_SUCCESSFUL.format(attendee_id)},200
 
 
 

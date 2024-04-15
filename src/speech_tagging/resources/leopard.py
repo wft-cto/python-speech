@@ -10,11 +10,11 @@
 #
 
 from pvleopard import create, LeopardActivationLimitError
-from speech_tagging.models.audio import AudioModel
-from speech_tagging.commons import audio_helper
-from speech_tagging.definitions import MEETING_FOLDER, PATH_AUDIO
-from speech_tagging.commons.extract_actions import ExtractAction
-from speech_tagging.commons.entity_recognition import recognize_ents
+from src.speech_tagging.models.audio import AudioModel
+from src.speech_tagging.commons import audio_helper
+from src.speech_tagging.definitions import MEETING_FOLDER, PATH_AUDIO
+from src.speech_tagging.commons.extract_actions import ExtractAction
+from src.speech_tagging.commons.entity_recognition import recognize_ents
 import os
 from speechmatics.models import ConnectionSettings
 from speechmatics.batch_client import BatchClient
@@ -78,7 +78,6 @@ def format_transcript(transcript):
             # timestamp.append(speaker_labels[index]["speaker"])          
             if timestamp['alternatives'][0]['speaker'] == initial_speaker:
                 # print("HERE First")
-                   
                 transcript_time_list.append(round(timestamp['start_time'], 2))
                 transcript_time_list.append(round(timestamp['end_time'], 2))
                 transcript_text_list.append(timestamp['alternatives'][0]['content'])
@@ -105,10 +104,15 @@ def format_transcript(transcript):
                             action_phrase = recognize_ents(transcript_text, action_phrase)
                         else:
                             action_phrase = []
-            
+
+                        if initial_speaker == 'UU':
+                            speaker_label = 1
+                        else:
+                            speaker_label = int(initial_speaker[-1])
+
                         if transcript_time_list:                   
                             transcript_dict = {
-                                "speaker": initial_speaker,
+                                "speaker": speaker_label,    
                                 "from": min(transcript_time_list),
                                 "to": max(transcript_time_list),
                                 "vocal": transcript_text,
@@ -130,9 +134,15 @@ def format_transcript(transcript):
                 transcript_text = transcript_text.replace("%HESITATION","")
                 # # get action phrase from the transcripted text
                 action_phrase = ea.check_imperative(transcript_text)
+
+                if initial_speaker == 'UU':
+                    speaker_label = 1
+                else:
+                    speaker_label = int(initial_speaker[-1])
+
                 if transcript_time_list:
                     transcript_dict = {
-                        "speaker": initial_speaker,
+                        "speaker": speaker_label,
                         "from": min(transcript_time_list),
                         "to": max(transcript_time_list),
                         # "vocal": transcript_text,
@@ -187,10 +197,14 @@ def format_transcript(transcript):
                         else:
                             action_phrase = []
 
+                        if initial_speaker == 'UU':
+                            speaker_label = 1
+                        else:
+                            speaker_label = int(initial_speaker[-1])
                                             
                         if transcript_time_list:                   
                             transcript_dict = {
-                                "speaker": initial_speaker,
+                                "speaker": speaker_label,
                                 "from": min(transcript_time_list),
                                 "to": max(transcript_time_list),
                                 "vocal": transcript_text,
@@ -255,7 +269,7 @@ def getTranscribe(audio_id):
             # Notifications are described here: https://docs.speechmatics.com/features-other/notifications
             transcript = client.wait_for_completion(job_id, transcription_format='json-v2')
             # To see the full output, try setting transcription_format='json-v2'.
-            # print(transcript['results'])
+            # print("transcript", transcript['results'])
             format_transcripts = format_transcript(transcript['results'])
 
             return format_transcripts, 1

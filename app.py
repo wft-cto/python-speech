@@ -2,7 +2,8 @@ import dotenv
 import logging
 
 import numpy
-# print(numpy.__version__)
+import tensorflow
+print(tensorflow.__version__)
 
 
 print('IN')
@@ -28,34 +29,34 @@ from marshmallow import ValidationError
 import strgen
 
 from config import *
-from speech_tagging.commons.audio_helper import AUDIO_SET
-from speech_tagging.commons.text_helper import TEXT_FILE_SET
-from speech_tagging.definitions import *
-from speech_tagging.ma import ma
+from src.speech_tagging.commons.audio_helper import AUDIO_SET
+from src.speech_tagging.commons.text_helper import TEXT_FILE_SET
+from src.speech_tagging.definitions import *
+from src.speech_tagging.ma import ma
 
-from speech_tagging.resources.user import UserDetail, UserDetailFromEmail,UserLogin, UserAppleLogin, WixTestUrl
-from speech_tagging.resources.attendee import Attendee, AttendeeVoice, AttendeeRegister, AttendeeDelete
-from speech_tagging.resources.audio import MeetingAudioUpload, MeetingAudio, MeetingAudios, Audio
-from speech_tagging.resources.meeting import Meeting
-from speech_tagging.resources.organization import (OrganizationLogin, OrganizationDetail,
+from src.speech_tagging.resources.user import UserDetail, UserDetailFromEmail,UserLogin, UserAppleLogin, WixTestUrl
+from src.speech_tagging.resources.attendee import Attendee, AttendeeVoice, AttendeeRegister, AttendeeDelete
+from src.speech_tagging.resources.audio import MeetingAudioUpload, MeetingAudio, MeetingAudios, Audio
+from src.speech_tagging.resources.meeting import Meeting
+from src.speech_tagging.resources.organization import (OrganizationLogin, OrganizationDetail,
                                                      OrganizationList, OrganizationDetailById)
-# from speech_tagging.resources.train_speaker import TrainSpeaker
-from speech_tagging.resources.transcribe import Transcribe, UpdateTranscribeJsonFile, GetTextFile
-from speech_tagging.resources.recognize_speaker import RecognizeSpeaker
-from speech_tagging.resources.attendee import AllAttendee
-from speech_tagging.resources.custom_language_model import (
+from src.speech_tagging.resources.train_speaker import TrainSpeaker, DeleteAttendeeEmbeding
+from src.speech_tagging.resources.transcribe import Transcribe, UpdateTranscribeJsonFile, GetTextFile
+from src.speech_tagging.resources.recognize_speaker import RecognizeSpeaker
+from src.speech_tagging.resources.attendee import AllAttendee
+from src.speech_tagging.resources.custom_language_model import (
     LanguageModel, LanguageModelList, LanguageModelDetail, TrainLanguageModel,
     Corpus, ListCorpus, AvailableLanguageModelList, AddCorpus, DeleteLanguageModel
 )
 
-from speech_tagging.db import db
+from src.speech_tagging.db import db
 
-from speech_tagging.models.user_registration import User
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.models.audio import AudioModel
+from src.speech_tagging.models.user_registration import User
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.models.audio import AudioModel
 
-from speech_tagging.schemas.user import UserSchema
-from speech_tagging.schemas.organization import OrganizationSchema
+from src.speech_tagging.schemas.user import UserSchema
+from src.speech_tagging.schemas.organization import OrganizationSchema
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -96,7 +97,7 @@ mail_settings = {
 organization_schema = OrganizationSchema()
 user_schema = UserSchema()
 
-app = Flask(__name__,static_folder='speech_tagging/static')
+app = Flask(__name__,static_folder='src.speech_tagging/static')
 
 handler = logging.FileHandler("test.log")  # Create the file logger
 app.logger.addHandler(handler)             # Add it to the built-in logger
@@ -209,8 +210,9 @@ api.add_resource(Attendee, "/attendee/<int:attendee_id>")
 api.add_resource(AttendeeVoice, "/attendee-voice")
 api.add_resource(AllAttendee, "/attendees")
 api.add_resource(AttendeeDelete, "/organization/<int:organization_id>/attendee/<int:attendee_id>/delete")
+api.add_resource(DeleteAttendeeEmbeding, "/attendee/<int:attendee_id>")
 
-# api.add_resource(TrainSpeaker, "/train-attendee")
+api.add_resource(TrainSpeaker, "/train-attendee")
 
 # api.add_resource(Transcribe, "/transcribe/<string:filename>")
 api.add_resource(Transcribe, "/transcribe/<int:organization_id>/<string:model_name>/<int:audio_id>")
@@ -824,4 +826,4 @@ def reset_password(email):
 if __name__ == '__main__':
 
     # app.run(port=5000, use_reloader=False, host='0.0.0.0')
-     app.run(port=5002)
+     app.run()

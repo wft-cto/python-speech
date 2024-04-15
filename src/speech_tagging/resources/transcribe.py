@@ -7,29 +7,29 @@ from flask import current_app as app
 from flask import request
 from flask_restful import Resource
 
-from speech_tagging.watson_speech.watson_audio import WatsonSpeech
-from speech_tagging.watson_speech import json_helper
-from speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
+from src.speech_tagging.watson_speech.watson_audio import WatsonSpeech
+from src.speech_tagging.watson_speech import json_helper
+from src.speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
 
-from speech_tagging.commons.extract_actions import ExtractAction
-from speech_tagging.commons.entity_recognition import recognize_ents
-from speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
-from speech_tagging.commons.messages import *
-from speech_tagging.commons import audio_helper, text_helper, recognition_helper
+from src.speech_tagging.commons.extract_actions import ExtractAction
+from src.speech_tagging.commons.entity_recognition import recognize_ents
+from src.speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
+from src.speech_tagging.commons.messages import *
+from src.speech_tagging.commons import audio_helper, text_helper, recognition_helper
 
-from speech_tagging.resources.leopard import getTranscribe
+from src.speech_tagging.resources.leopard import getTranscribe
 
-from speech_tagging.definitions import *
+from src.speech_tagging.definitions import *
 
-from speech_tagging.models.organization import OrganizationModel
-from speech_tagging.models.language_model import LanguageModelModel
-from speech_tagging.models.attendee import attendee_audio
-from speech_tagging.models.corpus import CorpusModel
-from speech_tagging.models.attendee import AttendeeModel
-from speech_tagging.models.audio import AudioModel
+from src.speech_tagging.models.organization import OrganizationModel
+from src.speech_tagging.models.language_model import LanguageModelModel
+from src.speech_tagging.models.attendee import attendee_audio
+from src.speech_tagging.models.corpus import CorpusModel
+from src.speech_tagging.models.attendee import AttendeeModel
+from src.speech_tagging.models.audio import AudioModel
 
-from speech_tagging.schemas.audio import AudioModelSchema
-from speech_tagging.db import db
+from src.speech_tagging.schemas.audio import AudioModelSchema
+from src.speech_tagging.db import db
 
 watson_language_model = CustomLanguageModel()
 
@@ -218,14 +218,14 @@ def format_transcript(transcript):
 
 def recognize_speaker(filename,transcript,transcription_description,audio_id):
     basename = filename.split(".")[0]
-    json_filename = ".".join((basename, "json"))
-    json_filepath = os.path.join(PATH_JSON_MEETING, json_filename)
-    speaker_chunk = json_helper.pipeline(json_filepath)
+    # json_filename = ".".join((basename, "json"))
+    # json_filepath = os.path.join(PATH_JSON_MEETING, json_filename)
+    # speaker_chunk = json_helper.pipeline(json_filepath)
 
     app.logger.info(datetime.now())
     app.logger.info('recognize_speaker detail :')
-    app.logger.info(json_filepath)
-    app.logger.info(speaker_chunk)
+    # app.logger.info(json_filepath)
+    # app.logger.info(speaker_chunk)
     app.logger.info("\n")
 
     audio_object, ext = audio_helper.create_audio_segment_object(filename)
@@ -236,7 +236,7 @@ def recognize_speaker(filename,transcript,transcription_description,audio_id):
     app.logger.info(ext)
     app.logger.info("\n")
 
-    for chunk in speaker_chunk:
+    for chunk in transcript:
         id_ = chunk['speaker']
         audio_helper.trim_and_save_audio_from_chunk(audio_object,id_, ext, chunk, filename,
                                                     PATH_SPEAKERS)
@@ -250,40 +250,40 @@ def recognize_speaker(filename,transcript,transcription_description,audio_id):
             app.logger.info(datetime.now())
             app.logger.info('final speaker exception detail :')
             app.logger.info(str(e))
-            app.logger.info("\n")           
+            app.logger.info("\n")             
             pass
         
-        # keep record of audio id and recognized speaker(attendee id) in  attendee_audio table
-        for key,value in final_speakers.items():
-            if value == "Unknown":
-                pass
-            else:
-                # keep record of audio id and attendee id
+        # # keep record of audio id and recognized speaker(attendee id) in  attendee_audio table
+        # for key,value in final_speakers.items():
+        #     if value == "Unknown":
+        #         pass
+        #     else:
+        #         # keep record of audio id and attendee id
                 
-                # attendee_audio_obj = attendee_audio.query.filter_by(audio_id=audio_id).filter_by(attendee_id=attendee_id).first()
-                # if attendee_audio_obj:
-                #     pass
-                try:
-                    statement = attendee_audio.insert().values(audio_id=audio_id, attendee_id=value["id"])
-                    try:
-                        db.session.execute(statement)
-                        db.session.commit()
-                    except Exception as e:
-                        app.logger.info(datetime.now())
-                        app.logger.info('inner db exception detail :')
-                        app.logger.info(str(e))
-                        app.logger.info("\n")      
+        #         # attendee_audio_obj = attendee_audio.query.filter_by(audio_id=audio_id).filter_by(attendee_id=attendee_id).first()
+        #         # if attendee_audio_obj:
+        #         #     pass
+        #         try:
+        #             statement = attendee_audio.insert().values(audio_id=audio_id, attendee_id=value["id"])
+        #             try:
+        #                 db.session.execute(statement)
+        #                 db.session.commit()
+        #             except Exception as e:
+        #                 app.logger.info(datetime.now())
+        #                 app.logger.info('inner db exception detail :')
+        #                 app.logger.info(str(e))
+        #                 app.logger.info("\n")      
 
-                        # return {"Message":"Something error in server"},500
-                        # return {"Message":"this is error------------>" + str(e)},500
-                        pass
-                except:
-                    app.logger.info(datetime.now())
-                    app.logger.info('outer db exception detail :')
-                    app.logger.info(str(e))
-                    app.logger.info("\n")      
-                    # return {"Message":" error outer------------>" + str(e)},500
-                    pass
+        #                 # return {"Message":"Something error in server"},500
+        #                 # return {"Message":"this is error------------>" + str(e)},500
+        #                 pass
+        #         except:
+        #             app.logger.info(datetime.now())
+        #             app.logger.info('outer db exception detail :')
+        #             app.logger.info(str(e))
+        #             app.logger.info("\n")      
+        #             # return {"Message":" error outer------------>" + str(e)},500
+        #             pass
     except Exception as e:
         app.logger.info(datetime.now())
         app.logger.info('first exception detail :')
@@ -300,20 +300,20 @@ def recognize_speaker(filename,transcript,transcription_description,audio_id):
         
     # format the transcript initially provided by IBM WATSON api
 
-    transcript.update({"recognized_speakers": final_speakers})
-    transcript.update(transcription_description)
+    # transcript.update({"recognized_speakers": final_speakers})
+    # transcript.update(transcription_description)
 
     app.logger.info(datetime.now())
     app.logger.info('update transcription : \n')
     app.logger.info("\n") 
 
-    ws.save_json(transcript, filename, request.method)
+    # ws.save_json(transcript, filename, request.method)
 
     app.logger.info(datetime.now())
     app.logger.info('update transcription : \n')
     app.logger.info("\n") 
 
-    return transcript
+    return final_speakers
 
 
 class Transcribe(Resource):
@@ -406,22 +406,29 @@ class Transcribe(Resource):
             # with open(json_filepath,"r") as file:
             #     transcript = json.load(file)
             # update recognized_speaker in audio json file 
-            # print(json_filepath)
+            print(json_filepath)
             transcript_data = json_helper.read_json(json_filepath)
-            # print(transcript_data)
+            print(transcript_data)
             app.logger.info(datetime.now())
             app.logger.info("transcript data- recognized_speakers")
             # # app.logger.info(transcript_data["recognized_speakers"])
             # app.logger.info(transcript_data)
             app.logger.info("\n")
 
-            founded_speakers = recognition_helper.find_speakers(transcript_data["results"], audio_obj, audio_id)
+            # founded_speakers = recognition_helper.find_speakers(transcript_data["results"], audio_obj, audio_id)
 
-            recognition_helper.match_speakers(transcript_data["results"], audio_obj, audio_id)
+            rec_speakers = recognize_speaker(filename,transcript_data['results'],transcription_description,audio_id)
+
+            # founded_speakers = recognition_helper.match_speakers(transcript_data["results"], audio_obj, audio_id)
 
             # # print("founded_speakers >>>>>>>>>>", founded_speakers)
             
-            transcript_data["recognized_speakers"] = founded_speakers
+            # transcript_data["recognized_speakers"] = founded_speakers
+            
+            transcript_data["recognized_speakers"] = rec_speakers
+
+
+            # transcript = recognize_speaker(filename,transcript_data,transcript_data["meeting_details"],audio_id)
             # # print(transcript_data["recognized_speakers"])
             # # for key,value in transcript_data["recognized_speakers"].items():
             # #     if value == "Unknown":
@@ -449,6 +456,9 @@ class Transcribe(Resource):
             filename = audio_helper.get_basename(audio_obj.path)
 
             transcript,status = getTranscribe(audio_id)
+            
+            print("transcript>>>", transcript)
+
             # # transcript.update(transcription_description)
             # print("founded_speakers>>>>>", founded_speakers)
             # transcript,status = ws.transcribe_meeting(request.method, filename,customization_id)
@@ -470,7 +480,10 @@ class Transcribe(Resource):
                 # # print("return: format transcript")
                 app.logger.info(datetime.now())
                 app.logger.info("return: format transcript \n")
-                founded_speakers = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
+                # founded_speakers = recognition_helper.find_speakers(transcript, audio_obj, audio_id)
+                # founded_speakers = recognition_helper.match_speakers(transcript, audio_obj, audio_id)
+                
+
 
                 # transcript = {
                 #     "results": transcript
@@ -480,11 +493,15 @@ class Transcribe(Resource):
 
                 transcript_results["results"] = transcript
                 transcript_results["meeting_details"] = transcription_description["meeting_details"]
-                transcript_results["recognized_speakers"] = founded_speakers
+                # transcript_results["recognized_speakers"] = founded_speakers
+                # transcript_results["recognized_speakers"] = rec_speakers
                 # ws.save_json(transcript, filename, request.method)
                 # Specify the file path
                 file_path = os.path.join(PATH_JSON_MEETING, json_filename)
                 
+                rec_speakers = recognize_speaker(filename,transcript,transcription_description,audio_id)
+
+                transcript_results["recognized_speakers"] = rec_speakers
                 # Write JSON data to the file
                 with open(file_path, 'w') as json_file:
                     json.dump(transcript_results, json_file, indent=4)
