@@ -16,7 +16,7 @@ from src.speech_tagging.commons.messages import ATTENDEE_DOES_NOT_EXIST,TRAINING
 from src.speech_tagging.commons.recognition_helper import load_data, delete_embedding_for_user
 
 from flask_restful import Resource,reqparse
-from src.speech_tagging.speaker_recognition.manager import manager
+# from src.speech_tagging.speaker_recognition.manager import manager
 from src.speech_tagging.definitions import PATH_ATTENDEE_VOICE_SAMPLE, PATH_EMBEDDING, PATH_JSON_MEETING_EDIT
 from src.speech_tagging.commons.utils import get_all_filepaths, get_all_jsonfile_from_folder
 from src.speech_tagging.commons.messages import *
@@ -162,24 +162,24 @@ class TrainSpeaker(Resource):
             speaker_embedding = []
         print("speaker and speaker_embedding",speaker,speaker_embedding)
 
-        try:
-            # speaker = []
-            # speaker_embedding = []
-            for voice_sample in voice_samples:
-                try:
-                    embedding = manager.get_embeddings_from_wav(voice_sample)
-                except:
-                    continue
-                filename = os.path.basename(voice_sample)
+        # try:
+        #     # speaker = []
+        #     # speaker_embedding = []
+        #     for voice_sample in voice_samples:
+        #         try:
+        #             embedding = manager.get_embeddings_from_wav(voice_sample)
+        #         except:
+        #             continue
+        #         filename = os.path.basename(voice_sample)
 
-                if not EmbeddingModel.find_by_attendee_id(attendee_id):
-                    speaker.append(attendee_id)
-                    speaker_embedding.append(embedding)
-                    print("New Attendee")
-            wfile = open(embedding_file,"wb")
-            data = {"speaker":speaker,"embedding":speaker_embedding}
-            wfile.write(pickle.dumps(data))
-            wfile.close()
+        #         if not EmbeddingModel.find_by_attendee_id(attendee_id):
+        #             speaker.append(attendee_id)
+        #             speaker_embedding.append(embedding)
+        #             print("New Attendee")
+        #     wfile = open(embedding_file,"wb")
+        #     data = {"speaker":speaker,"embedding":speaker_embedding}
+        #     wfile.write(pickle.dumps(data))
+        #     wfile.close()
             
         except Exception :
             return {"Message":TRAINING_FAILED.format(attendee_id), "Error": str(e)},400

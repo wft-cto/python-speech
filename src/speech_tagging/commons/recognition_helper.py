@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist
 
 from flask import current_app as app
 from src.speech_tagging.definitions import *
-from src.speech_tagging.speaker_recognition.manager import manager
+# from src.speech_tagging.speaker_recognition.manager import manager
 from src.speech_tagging.models.attendee import AttendeeModel
 from src.speech_tagging.models.embedding import EmbeddingModel
 from src.speech_tagging.commons import audio_helper

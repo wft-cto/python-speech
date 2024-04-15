@@ -417,7 +417,7 @@ class Transcribe(Resource):
 
             # founded_speakers = recognition_helper.find_speakers(transcript_data["results"], audio_obj, audio_id)
 
-            rec_speakers = recognize_speaker(filename,transcript_data['results'],transcription_description,audio_id)
+            # rec_speakers = recognize_speaker(filename,transcript_data['results'],transcription_description,audio_id)
 
             # founded_speakers = recognition_helper.match_speakers(transcript_data["results"], audio_obj, audio_id)
 
@@ -425,7 +425,7 @@ class Transcribe(Resource):
             
             # transcript_data["recognized_speakers"] = founded_speakers
             
-            transcript_data["recognized_speakers"] = rec_speakers
+            # transcript_data["recognized_speakers"] = rec_speakers
 
 
             # transcript = recognize_speaker(filename,transcript_data,transcript_data["meeting_details"],audio_id)
@@ -499,9 +499,9 @@ class Transcribe(Resource):
                 # Specify the file path
                 file_path = os.path.join(PATH_JSON_MEETING, json_filename)
                 
-                rec_speakers = recognize_speaker(filename,transcript,transcription_description,audio_id)
+                # rec_speakers = recognize_speaker(filename,transcript,transcription_description,audio_id)
 
-                transcript_results["recognized_speakers"] = rec_speakers
+                # transcript_results["recognized_speakers"] = rec_speakers
                 # Write JSON data to the file
                 with open(file_path, 'w') as json_file:
                     json.dump(transcript_results, json_file, indent=4)
