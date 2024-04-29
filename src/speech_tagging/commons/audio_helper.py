@@ -16,7 +16,7 @@ import shutil
 
 import wave
 
-from src.speech_tagging.definitions import *
+from speech_tagging.definitions import *
 
 AUDIO = AUDIO + ("webm", "mp4", "m4a")
 

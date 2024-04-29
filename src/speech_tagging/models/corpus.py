@@ -1,5 +1,5 @@
-from src.speech_tagging.db import db
-from src.speech_tagging.models.organization import OrganizationModel
+from speech_tagging.db import db
+from speech_tagging.models.organization import OrganizationModel
 from typing import List
 
 

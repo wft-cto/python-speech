@@ -1,7 +1,7 @@
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 from datetime import datetime
-from src.speech_tagging.models.organization import OrganizationModel
-from src.speech_tagging.models.user_registration import User
+from speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.user_registration import User
 from typing import List
 
 class AudioModel(db.Model):

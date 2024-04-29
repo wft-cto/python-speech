@@ -1,4 +1,4 @@
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 from typing import List
 from sqlalchemy.schema import UniqueConstraint
 

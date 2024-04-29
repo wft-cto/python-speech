@@ -6,23 +6,23 @@ import werkzeug
 import shutil
 from flask import request
 
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 
-from src.speech_tagging.models.embedding import EmbeddingModel
-from src.speech_tagging.models.attendee import AttendeeModel, attendee_audio
-from src.speech_tagging.models.organization import OrganizationModel
-from src.speech_tagging.models.audio import AudioModel
-from src.speech_tagging.commons.messages import ATTENDEE_DOES_NOT_EXIST,TRAINING_SUCCESSFUL, TRAINING_FAILED
-from src.speech_tagging.commons.recognition_helper import load_data, delete_embedding_for_user
+from speech_tagging.models.embedding import EmbeddingModel
+from speech_tagging.models.attendee import AttendeeModel, attendee_audio
+from speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.audio import AudioModel
+from speech_tagging.commons.messages import ATTENDEE_DOES_NOT_EXIST,TRAINING_SUCCESSFUL, TRAINING_FAILED
+from speech_tagging.commons.recognition_helper import load_data, delete_embedding_for_user
 
 from flask_restful import Resource,reqparse
-# from src.speech_tagging.speaker_recognition.manager import manager
-from src.speech_tagging.definitions import PATH_ATTENDEE_VOICE_SAMPLE, PATH_EMBEDDING, PATH_JSON_MEETING_EDIT
-from src.speech_tagging.commons.utils import get_all_filepaths, get_all_jsonfile_from_folder
-from src.speech_tagging.commons.messages import *
-from src.speech_tagging.commons import audio_helper
-from src.speech_tagging.watson_speech import json_helper
-from src.speech_tagging.definitions import *
+from speech_tagging.speaker_recognition.manager import manager
+from speech_tagging.definitions import PATH_ATTENDEE_VOICE_SAMPLE, PATH_EMBEDDING, PATH_JSON_MEETING_EDIT
+from speech_tagging.commons.utils import get_all_filepaths, get_all_jsonfile_from_folder
+from speech_tagging.commons.messages import *
+from speech_tagging.commons import audio_helper
+from speech_tagging.watson_speech import json_helper
+from speech_tagging.definitions import *
 
 
 # def replace_attendee_detail_by_unknown(transcript_data,attendee_id):
@@ -162,24 +162,24 @@ class TrainSpeaker(Resource):
             speaker_embedding = []
         print("speaker and speaker_embedding",speaker,speaker_embedding)
 
-        # try:
-        #     # speaker = []
-        #     # speaker_embedding = []
-        #     for voice_sample in voice_samples:
-        #         try:
-        #             embedding = manager.get_embeddings_from_wav(voice_sample)
-        #         except:
-        #             continue
-        #         filename = os.path.basename(voice_sample)
+        try:
+            # speaker = []
+            # speaker_embedding = []
+            for voice_sample in voice_samples:
+                try:
+                    embedding = manager.get_embeddings_from_wav(voice_sample)
+                except:
+                    continue
+                filename = os.path.basename(voice_sample)
 
-        #         if not EmbeddingModel.find_by_attendee_id(attendee_id):
-        #             speaker.append(attendee_id)
-        #             speaker_embedding.append(embedding)
-        #             print("New Attendee")
-        #     wfile = open(embedding_file,"wb")
-        #     data = {"speaker":speaker,"embedding":speaker_embedding}
-        #     wfile.write(pickle.dumps(data))
-        #     wfile.close()
+                if not EmbeddingModel.find_by_attendee_id(attendee_id):
+                    speaker.append(attendee_id)
+                    speaker_embedding.append(embedding)
+                    print("New Attendee")
+            wfile = open(embedding_file,"wb")
+            data = {"speaker":speaker,"embedding":speaker_embedding}
+            wfile.write(pickle.dumps(data))
+            wfile.close()
             
         except Exception :
             return {"Message":TRAINING_FAILED.format(attendee_id), "Error": str(e)},400

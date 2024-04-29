@@ -1,5 +1,5 @@
-from src.speech_tagging.ma import ma
-from src.speech_tagging.models.organization import OrganizationModel
+from speech_tagging.ma import ma
+from speech_tagging.models.organization import OrganizationModel
 
 
 class OrganizationSchema(ma.ModelSchema):

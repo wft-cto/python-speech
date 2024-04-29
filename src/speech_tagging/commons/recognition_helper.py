@@ -8,19 +8,19 @@ import numpy
 from scipy.spatial.distance import cdist
 
 from flask import current_app as app
-from src.speech_tagging.definitions import *
-# from src.speech_tagging.speaker_recognition.manager import manager
-from src.speech_tagging.models.attendee import AttendeeModel
-from src.speech_tagging.models.embedding import EmbeddingModel
-from src.speech_tagging.commons import audio_helper
-from src.speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
+from speech_tagging.definitions import *
+from speech_tagging.speaker_recognition.manager import manager
+from speech_tagging.models.attendee import AttendeeModel
+from speech_tagging.models.embedding import EmbeddingModel
+from speech_tagging.commons import audio_helper
+from speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
 import shutil
 
 import os
 import pveagle
 import wave
 import struct
-from src.speech_tagging.models.audio import AudioModel
+from speech_tagging.models.audio import AudioModel
 from collections import Counter
 
 import scipy.cluster

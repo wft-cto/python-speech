@@ -1,7 +1,7 @@
 from marshmallow import fields, Schema
 from werkzeug.datastructures import FileStorage
-from src.speech_tagging.models.audio import AudioModel
-from src.speech_tagging.ma import ma
+from speech_tagging.models.audio import AudioModel
+from speech_tagging.ma import ma
 
 class FileStorageField(fields.Field):
     default_error_messages = {

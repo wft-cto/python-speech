@@ -10,11 +10,11 @@
 #
 
 from pvleopard import create, LeopardActivationLimitError
-from src.speech_tagging.models.audio import AudioModel
-from src.speech_tagging.commons import audio_helper
-from src.speech_tagging.definitions import MEETING_FOLDER, PATH_AUDIO
-from src.speech_tagging.commons.extract_actions import ExtractAction
-from src.speech_tagging.commons.entity_recognition import recognize_ents
+from speech_tagging.models.audio import AudioModel
+from speech_tagging.commons import audio_helper
+from speech_tagging.definitions import MEETING_FOLDER, PATH_AUDIO
+from speech_tagging.commons.extract_actions import ExtractAction
+from speech_tagging.commons.entity_recognition import recognize_ents
 import os
 from speechmatics.models import ConnectionSettings
 from speechmatics.batch_client import BatchClient
@@ -235,11 +235,8 @@ def getTranscribe(audio_id):
 
     print("Audio Path>>>>>>>>",audio_path)
 
-    # Change to your own file
-    LANGUAGE = "en"
-
     # Generate an API key at https://portal.speechmatics.com/manage-access/
-    API_KEY = "v6WluCMSgaT9i81wvz6vgbhc6HwuS8cP"
+    API_KEY = "hfx4E6QFuBkGWy4IreDFhExj66p5MKaK"
     LANGUAGE = "en"
 
     settings = ConnectionSettings(
@@ -259,11 +256,15 @@ def getTranscribe(audio_id):
     # Open the client using a context manager
     with BatchClient(settings) as client:
         try:
-            job_id = client.submit_job(
-                audio=audio_path,
-                transcription_config=conf
-            )
-            print(f'job {job_id} submitted successfully, waiting for transcript')
+            if os.path.exists(audio_path):
+                print("In this condition.")
+                job_id = client.submit_job(
+                    audio=audio_path,
+                    transcription_config=conf
+                )
+                print(f'job {job_id} submitted successfully, waiting for transcript')
+            else:
+                print("path not exists")
 
             # Note that in production, you should set up notifications instead of polling.
             # Notifications are described here: https://docs.speechmatics.com/features-other/notifications

@@ -7,29 +7,29 @@ from flask import current_app as app
 from flask import request
 from flask_restful import Resource
 
-from src.speech_tagging.watson_speech.watson_audio import WatsonSpeech
-from src.speech_tagging.watson_speech import json_helper
-from src.speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
+from speech_tagging.watson_speech.watson_audio import WatsonSpeech
+from speech_tagging.watson_speech import json_helper
+from speech_tagging.watson_speech.custom_language_model import CustomLanguageModel
 
-from src.speech_tagging.commons.extract_actions import ExtractAction
-from src.speech_tagging.commons.entity_recognition import recognize_ents
-from src.speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
-from src.speech_tagging.commons.messages import *
-from src.speech_tagging.commons import audio_helper, text_helper, recognition_helper
+from speech_tagging.commons.extract_actions import ExtractAction
+from speech_tagging.commons.entity_recognition import recognize_ents
+from speech_tagging.commons.utils import get_all_filename_from_folder, get_all_jsonfile_from_folder
+from speech_tagging.commons.messages import *
+from speech_tagging.commons import audio_helper, text_helper, recognition_helper
 
-from src.speech_tagging.resources.leopard import getTranscribe
+from speech_tagging.resources.leopard import getTranscribe
 
-from src.speech_tagging.definitions import *
+from speech_tagging.definitions import *
 
-from src.speech_tagging.models.organization import OrganizationModel
-from src.speech_tagging.models.language_model import LanguageModelModel
-from src.speech_tagging.models.attendee import attendee_audio
-from src.speech_tagging.models.corpus import CorpusModel
-from src.speech_tagging.models.attendee import AttendeeModel
-from src.speech_tagging.models.audio import AudioModel
+from speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.language_model import LanguageModelModel
+from speech_tagging.models.attendee import attendee_audio
+from speech_tagging.models.corpus import CorpusModel
+from speech_tagging.models.attendee import AttendeeModel
+from speech_tagging.models.audio import AudioModel
 
-from src.speech_tagging.schemas.audio import AudioModelSchema
-from src.speech_tagging.db import db
+from speech_tagging.schemas.audio import AudioModelSchema
+from speech_tagging.db import db
 
 watson_language_model = CustomLanguageModel()
 
@@ -417,7 +417,7 @@ class Transcribe(Resource):
 
             # founded_speakers = recognition_helper.find_speakers(transcript_data["results"], audio_obj, audio_id)
 
-            # rec_speakers = recognize_speaker(filename,transcript_data['results'],transcription_description,audio_id)
+            rec_speakers = recognize_speaker(filename,transcript_data['results'],transcription_description,audio_id)
 
             # founded_speakers = recognition_helper.match_speakers(transcript_data["results"], audio_obj, audio_id)
 
@@ -425,7 +425,7 @@ class Transcribe(Resource):
             
             # transcript_data["recognized_speakers"] = founded_speakers
             
-            # transcript_data["recognized_speakers"] = rec_speakers
+            transcript_data["recognized_speakers"] = rec_speakers
 
 
             # transcript = recognize_speaker(filename,transcript_data,transcript_data["meeting_details"],audio_id)
@@ -499,9 +499,9 @@ class Transcribe(Resource):
                 # Specify the file path
                 file_path = os.path.join(PATH_JSON_MEETING, json_filename)
                 
-                # rec_speakers = recognize_speaker(filename,transcript,transcription_description,audio_id)
+                rec_speakers = recognize_speaker(filename,transcript,transcription_description,audio_id)
 
-                # transcript_results["recognized_speakers"] = rec_speakers
+                transcript_results["recognized_speakers"] = rec_speakers
                 # Write JSON data to the file
                 with open(file_path, 'w') as json_file:
                     json.dump(transcript_results, json_file, indent=4)

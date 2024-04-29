@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from src.speech_tagging.speaker_recognition.model import vggvox_model
-from src.speech_tagging.speaker_recognition.wav_reader import get_fft_spectrum, get_fft_spectrum_wav
-from src.speech_tagging.speaker_recognition import definitions as c
+from speech_tagging.speaker_recognition.model import vggvox_model
+from speech_tagging.speaker_recognition.wav_reader import get_fft_spectrum, get_fft_spectrum_wav
+from speech_tagging.speaker_recognition import definitions as c
 import time
 from scipy.spatial.distance import cdist
 import tensorflow as tf

@@ -1,9 +1,9 @@
 import enum
 from flask_login import UserMixin
 
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 from typing import List
-from src.speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.organization import OrganizationModel
 # class GenderEnum(enum.Enum):
 #     male = "M"
 #     female = "F"

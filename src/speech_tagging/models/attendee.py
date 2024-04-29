@@ -1,8 +1,8 @@
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 from typing import List
 from sqlalchemy.schema import UniqueConstraint
-from src.speech_tagging.models.organization import OrganizationModel
-from src.speech_tagging.models.audio import AudioModel
+from speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.audio import AudioModel
 
 attendee_audio = db.Table('attendee_audio',
     db.Column('audio_id', db.Integer, db.ForeignKey('audio.id'), primary_key=True),

@@ -1,7 +1,7 @@
-from src.speech_tagging.ma import ma
-from src.speech_tagging.models.meeting import MeetingModel
-from src.speech_tagging.models.audio import AudioModel
-from src.speech_tagging.models.organization import OrganizationModel
+from speech_tagging.ma import ma
+from speech_tagging.models.meeting import MeetingModel
+from speech_tagging.models.audio import AudioModel
+from speech_tagging.models.organization import OrganizationModel
 
 
 class MeetingSchema(ma.ModelSchema):

@@ -4,13 +4,13 @@ from sqlalchemy.exc import IntegrityError
 from flask_restful import Resource,reqparse
 from flask import request
 
-from src.speech_tagging.models.user_registration import User
-from src.speech_tagging.models.organization import OrganizationModel
-from src.speech_tagging.models.audio import AudioModel
+from speech_tagging.models.user_registration import User
+from speech_tagging.models.organization import OrganizationModel
+from speech_tagging.models.audio import AudioModel
 
-from src.speech_tagging.schemas.user import UserSchema
-from src.speech_tagging.schemas.organization import OrganizationSchema
-from src.speech_tagging.schemas.audio import AudioModelSchema
+from speech_tagging.schemas.user import UserSchema
+from speech_tagging.schemas.organization import OrganizationSchema
+from speech_tagging.schemas.audio import AudioModelSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager,login_user
 from flask_jwt_extended import (

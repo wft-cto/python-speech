@@ -1,4 +1,4 @@
-from src.speech_tagging.db import db
+from speech_tagging.db import db
 from flask_login import UserMixin
 from typing import List
 

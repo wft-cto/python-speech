@@ -1,15 +1,15 @@
 from flask_restful import Resource
 from flask import request
-from src.speech_tagging.models.meeting import MeetingModel
-from src.speech_tagging.models.attendee import AttendeeModel
-from src.speech_tagging.commons.messages import *
-from src.speech_tagging.schemas.recognize_speaker import RecognizeSpeakerSchema
-from src.speech_tagging.watson_speech import json_helper
-from src.speech_tagging.definitions import PATH_JSON_MEETING, PATH_SPEAKER_RECOGNITION, PATH_AUDIO_CLIPS
-from src.speech_tagging.commons import audio_helper
-from src.speech_tagging.commons import recognition_helper
-from src.speech_tagging.models.audio import AudioModel
-from src.speech_tagging.commons.utils import get_all_filename_from_folder
+from speech_tagging.models.meeting import MeetingModel
+from speech_tagging.models.attendee import AttendeeModel
+from speech_tagging.commons.messages import *
+from speech_tagging.schemas.recognize_speaker import RecognizeSpeakerSchema
+from speech_tagging.watson_speech import json_helper
+from speech_tagging.definitions import PATH_JSON_MEETING, PATH_SPEAKER_RECOGNITION, PATH_AUDIO_CLIPS
+from speech_tagging.commons import audio_helper
+from speech_tagging.commons import recognition_helper
+from speech_tagging.models.audio import AudioModel
+from speech_tagging.commons.utils import get_all_filename_from_folder
 import os
 import shutil
 
