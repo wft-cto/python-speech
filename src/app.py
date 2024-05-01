@@ -3,8 +3,8 @@ import logging
 
 import numpy
 # import tensorflow
-# print(tensorflow.__version__)
-
+import keras
+print(keras.__version__)
 
 print('IN')
 
@@ -306,7 +306,8 @@ def user_signup():
 
         organization_id = data.get("organization_id")
         if organization_id:
-            organization = OrganizationModel.find_by_organization_id(organization_id)
+            print("HERE")
+            organization = OrganizationModel.find_by_id(organization_id)
             if not organization:
                 return jsonify({"data":
                                     {},
@@ -826,4 +827,4 @@ def reset_password(email):
 if __name__ == '__main__':
 
     # app.run(port=5000, use_reloader=False, host='0.0.0.0')
-     app.run(port=5002)
+     app.run()

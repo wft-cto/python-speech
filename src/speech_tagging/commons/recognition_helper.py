@@ -30,7 +30,7 @@ from sklearn import preprocessing
 from sklearn.mixture import GaussianMixture
 
 
-import librosa
+#import librosa
 from scipy.spatial.distance import euclidean
 
 COST_METRIC = "cosine"  # euclidean or cosine
